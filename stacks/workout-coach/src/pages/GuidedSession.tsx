@@ -7,6 +7,7 @@ import { WorkflowEngine } from "../engines/workflow/WorkflowEngine";
 import { IntervalTimer } from "../engines/timer/IntervalTimer";
 import { VoiceCoach } from "../engines/audio/VoiceCoach";
 import { WebGPUEngine } from "../engines/webgpu/WebGPUEngine";
+import { WebGLEngine } from "../engines/webgl/WebGLEngine";
 import { TempoEngine, type TempoEvent } from "../engines/timer/TempoEngine";
 import { Button } from "../components/ui/Button";
 import { formatTime } from "../lib/utils";
@@ -15,13 +16,16 @@ import PauseModal from "../components/modals/PauseModal";
 
 // Import shader code
 import intensityShader from "../shaders/intensity.wgsl?raw";
+import vertexShader from "../shaders/intensity.vert.glsl?raw";
+import fragmentShader from "../shaders/intensity.frag.glsl?raw";
 
 export default function GuidedSession() {
   const params = useParams();
   const navigate = useNavigate();
   
   let canvasRef: HTMLCanvasElement | undefined;
-  let webgpuEngine: WebGPUEngine;
+  let webgpuEngine: WebGPUEngine | null = null;
+  let webglEngine: WebGLEngine | null = null;
   let globalTimer: IntervalTimer;
   let stepTimer: IntervalTimer;
   let voiceCoach: VoiceCoach;
@@ -30,7 +34,7 @@ export default function GuidedSession() {
 
   const [elapsed, setElapsed] = createSignal(0);
   const [stepElapsed, setStepElapsed] = createSignal(0);
-  const [webgpuSupported, setWebgpuSupported] = createSignal(true);
+  const [renderingSupported, setRenderingSupported] = createSignal(true);
   const [showSummary, setShowSummary] = createSignal(false);
   const [showPause, setShowPause] = createSignal(false);
   const [tempoProgress, setTempoProgress] = createSignal(0);
@@ -160,19 +164,37 @@ export default function GuidedSession() {
     voiceCoach = new VoiceCoach();
     globalTimer = new IntervalTimer("countup");
 
-    // Initialize WebGPU
+    // Initialize WebGPU or WebGL (with fallback)
     if (canvasRef) {
+      // Try WebGPU first
       webgpuEngine = new WebGPUEngine();
-      const success = await webgpuEngine.init(canvasRef, intensityShader);
-      setWebgpuSupported(success);
+      const webgpuSuccess = await webgpuEngine.init(canvasRef, intensityShader);
 
-      if (success) {
+      if (webgpuSuccess) {
+        setRenderingSupported(true);
         webgpuEngine.startRenderLoop(() => ({
           time: elapsed(),
           intensity: sessionGetters.getCurrentStep()?.visualIntensity || 0.3,
           tempoPhase: tempoProgress(),
           screenSize: [window.innerWidth, window.innerHeight],
         }));
+      } else {
+        // Fallback to WebGL
+        webgpuEngine = null;
+        webglEngine = new WebGLEngine();
+        const webglSuccess = webglEngine.init(canvasRef, vertexShader, fragmentShader);
+        
+        if (webglSuccess) {
+          setRenderingSupported(true);
+          webglEngine.startRenderLoop(() => ({
+            time: elapsed(),
+            intensity: sessionGetters.getCurrentStep()?.visualIntensity || 0.3,
+            tempoPhase: tempoProgress(),
+            screenSize: [window.innerWidth, window.innerHeight],
+          }));
+        } else {
+          setRenderingSupported(false);
+        }
       }
     }
 
@@ -203,6 +225,7 @@ export default function GuidedSession() {
     }
     tempoEngine?.stop();
     webgpuEngine?.destroy();
+    webglEngine?.destroy();
     voiceCoach?.clearQueue();
   });
 
@@ -327,13 +350,13 @@ export default function GuidedSession() {
       />
 
       <div class="relative h-screen w-screen overflow-hidden bg-black">
-      {/* WebGPU Canvas */}
-      <Show when={webgpuSupported()} fallback={
+      {/* Rendering Canvas (WebGPU or WebGL) */}
+      <Show when={renderingSupported()} fallback={
         <div class="flex items-center justify-center h-full text-white">
           <div class="text-center space-y-4">
-            <div class="text-2xl">WebGPU Not Supported</div>
+            <div class="text-2xl">Graphics Not Supported</div>
             <div class="text-muted-foreground">
-              Please use Chrome 113+ or Edge 113+ to experience the full visual effects.
+              Your browser doesn't support WebGL or WebGPU. Please update to a modern browser.
             </div>
             <Button onClick={() => navigate("/")}>Go Back</Button>
           </div>

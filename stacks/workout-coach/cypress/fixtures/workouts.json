@@ -1,0 +1,41 @@
+{
+  "sampleWorkout": {
+    "id": "test-workout-1",
+    "name": "Test Strength Session",
+    "duration": 15,
+    "equipment": ["barbell", "dumbbells"],
+    "exercises": [
+      {
+        "name": "Barbell Squat",
+        "sets": 3,
+        "reps": 8,
+        "load": "moderate",
+        "tempo": "3-1-1",
+        "rest": 90
+      },
+      {
+        "name": "Dumbbell Press",
+        "sets": 3,
+        "reps": 10,
+        "load": "moderate",
+        "tempo": "2-0-1",
+        "rest": 60
+      }
+    ]
+  },
+  "quickStartConfig": {
+    "duration": 10,
+    "goal": "strength",
+    "equipment": ["barbell", "dumbbells"],
+    "timestamp": 1234567890
+  },
+  "lastSession": {
+    "workoutId": "test-workout-1",
+    "completedAt": "2024-01-01T10:00:00Z",
+    "duration": 900,
+    "totalReps": 48,
+    "totalSets": 6,
+    "caloriesBurned": 120,
+    "xpEarned": 150
+  }
+}
