@@ -9,6 +9,9 @@ export default function Stats() {
 
   return (
     <div class="min-h-screen bg-background p-4">
+      <div class="absolute top-4 left-4 text-xs text-muted-foreground">
+        System Menu / Stats
+      </div>
       <div class="max-w-4xl mx-auto space-y-6">
         <div class="flex items-center justify-between">
           <h1 class="text-3xl font-bold">Workout Stats</h1>

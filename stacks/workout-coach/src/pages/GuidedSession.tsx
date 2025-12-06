@@ -372,6 +372,10 @@ export default function GuidedSession() {
 
       {/* HUD Overlay */}
       <div class="absolute inset-0 pointer-events-none">
+        {/* Page Label */}
+        <div class="absolute top-4 left-4 text-xs text-white/60 pointer-events-none">
+          System Menu / Guided Session
+        </div>
         {/* Top Bar */}
         <div class="p-4 flex justify-between text-white text-sm pointer-events-auto">
           <div>Elapsed: {formatTime(elapsed())}</div>

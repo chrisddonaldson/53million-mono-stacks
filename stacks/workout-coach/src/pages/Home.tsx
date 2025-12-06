@@ -28,6 +28,9 @@ export default function Home() {
       <QuickStartModal open={quickStartOpen()} onOpenChange={setQuickStartOpen} />
       
       <div class="min-h-screen bg-background p-4 flex flex-col items-center justify-center">
+        <div class="absolute top-4 left-4 text-xs text-muted-foreground">
+          System Menu
+        </div>
         <div class="w-full max-w-2xl space-y-6">
         <div class="text-center space-y-2">
           <h1 class="text-4xl font-bold tracking-tight">Workout Coach</h1>
