@@ -20,10 +20,32 @@ import vertexShader from "../shaders/intensity.vert.glsl?raw";
 import fragmentShader from "../shaders/intensity.frag.glsl?raw";
 
 export default function GuidedSession() {
+  console.log("=== GuidedSession COMPONENT RENDER ===");
   const params = useParams();
   const navigate = useNavigate();
   
+  console.log("GuidedSession params at component level:", params);
+  console.log("GuidedSession params.id at component level:", params.id);
+  
+  const [initError, setInitError] = createSignal<string | null>(null);
+  const [isLoading, setIsLoading] = createSignal(true);
+  
   let canvasRef: HTMLCanvasElement | undefined;
+  
+  // Early return test to ensure component renders
+  if (!params.id) {
+    console.error("No params.id found!");
+    return (
+      <div class="h-screen w-screen flex items-center justify-center bg-black text-white">
+        <div class="max-w-2xl p-8 space-y-4">
+          <h1 class="text-2xl font-bold text-red-500">No Workout ID</h1>
+          <p class="text-lg">params.id is missing or empty</p>
+          <p class="text-sm">params: {JSON.stringify(params)}</p>
+          <Button onClick={() => navigate("/library")}>Go to Library</Button>
+        </div>
+      </div>
+    );
+  }
   let webgpuEngine: WebGPUEngine | null = null;
   let webglEngine: WebGLEngine | null = null;
   let globalTimer: IntervalTimer;
@@ -128,47 +150,139 @@ export default function GuidedSession() {
   };
 
   onMount(async () => {
-    // Initialize session
-    const variantId = params.id || "";
-    if (!variantId) {
-      navigate("/library");
-      return;
-    }
-    
-    const profile = workoutActions.getCurrentProfile();
-    const variant = workoutActions.getWorkoutVariant(variantId);
-
-    if (!variant) {
-      console.error("Workout variant not found");
-      navigate("/library");
-      return;
-    }
-
-    // Generate timeline
-    const timeline = WorkflowEngine.generateWorkoutTimeline(
-      profile,
-      variantId,
-      {
-        globalRestTime: settingsStore.workout.defaultRestTime,
-        voiceEnabled: settingsStore.audio.voiceVolume > 0,
-        musicDucking: settingsStore.audio.musicDucking,
-        motivationalLevel: "medium",
-        progressionVariant: "standard",
+    try {
+      console.log("=== GuidedSession onMount START ===");
+      console.log("params:", params);
+      console.log("params.id:", params.id);
+      
+      // Initialize session
+      // The wildcard route *id captures everything after /session/
+      // SolidJS router automatically decodes URL parameters
+      const workoutId = params.id || "";
+      
+      console.log("GuidedSession workoutId:", workoutId);
+      console.log("GuidedSession params.id type:", typeof params.id);
+      console.log("GuidedSession workoutId length:", workoutId.length);
+      
+      if (!workoutId) {
+        console.log("No workoutId, navigating to /library");
+        setInitError("No workout ID provided");
+        setIsLoading(false);
+        return;
       }
-    );
+      
+      console.log("CHECKPOINT 1: Getting profile...");
+      const profile = workoutActions.getCurrentProfile();
+      console.log("Profile:", profile);
+      console.log("Profile meta:", profile.meta);
+      console.log("Profile title:", profile.meta?.title);
+      
+      // Check if this is a microworkout ID (format: "variantId/microworkoutTitle")
+      console.log("CHECKPOINT 2: Splitting workoutId...");
+      const parts = workoutId.split("/");
+      console.log("Parts:", parts, "Length:", parts.length);
+      console.log("Parts[0]:", parts[0]);
+      console.log("Parts[1]:", parts[1]);
+      
+      let timeline: any[];
+
+      if (parts.length === 2) {
+        console.log("CHECKPOINT 3: Microworkout mode detected");
+        // Microworkout session
+        const [variantId, microworkoutTitle] = parts;
+        console.log("Microworkout mode - variantId:", variantId, "title:", microworkoutTitle);
+        console.log("Getting variant for:", variantId);
+        const variant = workoutActions.getWorkoutVariant(variantId);
+        console.log("Variant result:", variant);
+        console.log("Variant micro:", variant?.micro);
+
+        if (!variant) {
+          console.error("CHECKPOINT 3.1: Workout variant not found for:", variantId);
+          const errorMsg = `Workout variant not found: ${variantId}`;
+          setInitError(errorMsg);
+          setIsLoading(false);
+          alert(errorMsg);
+          return;
+        }
+
+        console.log("CHECKPOINT 3.2: Variant found, checking micro workouts...");
+        console.log("Variant micro workouts:", variant.micro.map(m => m.title));
+        const microworkout = variant.micro.find(m => m.title === microworkoutTitle);
+        console.log("Found microworkout:", microworkout);
+        
+        if (!microworkout) {
+          console.error("CHECKPOINT 3.3: Microworkout not found");
+          console.error(`Microworkout "${microworkoutTitle}" not found in variant "${variantId}"`);
+          console.error("Available microworkouts:", variant.micro.map(m => m.title));
+          const errorMsg = `Microworkout "${microworkoutTitle}" not found. Available: ${variant.micro.map(m => m.title).join(", ")}`;
+          setInitError(errorMsg);
+          setIsLoading(false);
+          alert(errorMsg);
+          return;
+        }
+
+        console.log("CHECKPOINT 4: Generating microworkout timeline...");
+        timeline = WorkflowEngine.generateMicroworkoutTimeline(
+          profile,
+          variantId,
+          microworkoutTitle,
+          {
+            globalRestTime: settingsStore.workout.defaultRestTime,
+            voiceEnabled: settingsStore.audio.voiceVolume > 0,
+            musicDucking: settingsStore.audio.musicDucking,
+            motivationalLevel: "medium",
+            progressionVariant: "standard",
+          }
+        );
+        console.log("CHECKPOINT 5: Timeline generated:", timeline.length, "steps");
+      } else {
+        console.log("CHECKPOINT 6: Full workout mode");
+        // Full workout variant session
+        const variant = workoutActions.getWorkoutVariant(workoutId);
+
+        if (!variant) {
+          console.error("CHECKPOINT 6.1: Workout variant not found");
+          const errorMsg = "Workout variant not found: " + workoutId;
+          setInitError(errorMsg);
+          setIsLoading(false);
+          return;
+        }
+
+        console.log("CHECKPOINT 7: Generating full workout timeline...");
+        timeline = WorkflowEngine.generateWorkoutTimeline(
+          profile,
+          workoutId,
+          {
+            globalRestTime: settingsStore.workout.defaultRestTime,
+            voiceEnabled: settingsStore.audio.voiceVolume > 0,
+            musicDucking: settingsStore.audio.musicDucking,
+            motivationalLevel: "medium",
+            progressionVariant: "standard",
+          }
+        );
+      }
 
     // Create session
-    sessionActions.createSession(variantId, profile.meta.title, timeline);
+    console.log("CHECKPOINT 8: Creating session...");
+    console.log("Creating session with:", { workoutId, profile: profile.meta.title, timelineLength: timeline.length });
+    sessionActions.createSession(workoutId, profile.meta.title, timeline);
+    console.log("CHECKPOINT 9: Session created");
 
     // Initialize engines
+    console.log("CHECKPOINT 10: Initializing engines...");
     voiceCoach = new VoiceCoach();
     globalTimer = new IntervalTimer("countup");
+    console.log("CHECKPOINT 11: VoiceCoach and Timer initialized");
 
     // Initialize WebGPU or WebGL (with fallback)
+    console.log("CHECKPOINT 12: Initializing graphics...");
+    console.log("Canvas ref exists:", !!canvasRef);
     if (canvasRef) {
+      console.log("CHECKPOINT 13: Trying WebGPU...");
       // Try WebGPU first
       webgpuEngine = new WebGPUEngine();
       const webgpuSuccess = await webgpuEngine.init(canvasRef, intensityShader);
+      console.log("CHECKPOINT 14: WebGPU init result:", webgpuSuccess);
 
       if (webgpuSuccess) {
         setRenderingSupported(true);
@@ -214,7 +328,23 @@ export default function GuidedSession() {
     });
 
     // Start step timer
+    console.log("Starting step timer...");
     startStepTimer();
+    
+    // Mark as loaded
+    setIsLoading(false);
+    console.log("=== GuidedSession onMount COMPLETE ===");
+    } catch (error) {
+      console.error("!!! Error in GuidedSession onMount:", error);
+      console.error("Error stack:", error instanceof Error ? error.stack : "no stack");
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setInitError(errorMessage);
+      setIsLoading(false);
+      alert("Failed to load workout: " + errorMessage);
+      // navigate("/library"); // Comment out to see error on page
+    } finally {
+      setIsLoading(false);
+    }
   });
 
   onCleanup(() => {
@@ -329,13 +459,41 @@ export default function GuidedSession() {
   const nextStep = () => sessionGetters.getNextStep();
   const progress = () => sessionGetters.getProgress();
 
+  console.log("=== GuidedSession RENDERING JSX ===");
+  console.log("Current session exists:", !!sessionStore.currentSession);
+  console.log("Current step exists:", !!currentStep());
+  console.log("Is loading:", isLoading());
+  console.log("Init error:", initError());
+
+  // Show loading state
+  if (isLoading()) {
+    return (
+      <div class="h-screen w-screen flex items-center justify-center bg-black text-white">
+        <div class="text-2xl">Loading workout...</div>
+      </div>
+    );
+  }
+
+  // Show error if initialization failed
+  if (initError()) {
+    return (
+      <div class="h-screen w-screen flex items-center justify-center bg-black text-white">
+        <div class="max-w-2xl p-8 space-y-4">
+          <h1 class="text-2xl font-bold text-red-500">Failed to Load Workout</h1>
+          <p class="text-lg">{initError()}</p>
+          <Button onClick={() => navigate("/library")}>Go to Library</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <SummaryModal 
         open={showSummary()} 
         onOpenChange={setShowSummary}
         stats={sessionGetters.getSessionStats()}
-        variantName={params.id || "Workout"}
+        variantName={sessionStore.currentSession?.profile || params.id || "Workout"}
       />
 
       <PauseModal
@@ -390,7 +548,13 @@ export default function GuidedSession() {
         {/* Center HUD */}
         <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
           <div class="bg-black/60 backdrop-blur-sm rounded-lg p-6 min-w-[400px] text-white">
-            <Show when={currentStep()}>
+            <Show when={currentStep()} fallback={
+              <div class="text-center">
+                <div class="text-xl text-red-500">No current step available</div>
+                <div class="text-sm mt-2">Session: {sessionStore.currentSession ? "exists" : "null"}</div>
+                <div class="text-sm">Timeline length: {sessionStore.currentSession?.timeline.length || 0}</div>
+              </div>
+            }>
               {(step) => (
                 <div class="space-y-4">
                   <div class="text-center">

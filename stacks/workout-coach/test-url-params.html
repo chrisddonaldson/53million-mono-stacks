@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head><title>URL Test</title></head>
+<body>
+  <h1>Test URL Parameters</h1>
+  <div id="test"></div>
+  <script>
+    const testCases = [
+      "Pull-Volume/Biceps Pump",
+      "Pull-Volume/Biceps%20Pump",
+      decodeURIComponent("Pull-Volume/Biceps%20Pump"),
+    ];
+    
+    const output = [];
+    testCases.forEach((test, i) => {
+      const parts = test.split("/");
+      output.push(`
+        <div style="margin: 20px; padding: 10px; border: 1px solid #ccc;">
+          <h3>Test ${i + 1}</h3>
+          <p><strong>Input:</strong> "${test}"</p>
+          <p><strong>Parts:</strong> [${parts.map(p => `"${p}"`).join(", ")}]</p>
+          <p><strong>Variant:</strong> "${parts[0]}"</p>
+          <p><strong>Title:</strong> "${parts[1]}"</p>
+        </div>
+      `);
+    });
+    
+    document.getElementById('test').innerHTML = output.join('');
+  </script>
+</body>
+</html>

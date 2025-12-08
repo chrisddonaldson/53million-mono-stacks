@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Session URL</title>
+</head>
+<body>
+    <h1>Debug Session URL</h1>
+    <div id="output"></div>
+    
+    <script>
+        const url = "Pull-Volume/Biceps%20Pump";
+        const decoded = decodeURIComponent(url);
+        const parts = decoded.split("/");
+        
+        const output = document.getElementById('output');
+        output.innerHTML = `
+            <p><strong>Raw URL:</strong> ${url}</p>
+            <p><strong>Decoded:</strong> ${decoded}</p>
+            <p><strong>Parts:</strong> ${JSON.stringify(parts)}</p>
+            <p><strong>Parts Length:</strong> ${parts.length}</p>
+            <p><strong>Variant ID:</strong> ${parts[0]}</p>
+            <p><strong>Microworkout Title:</strong> ${parts[1]}</p>
+            
+            <h2>Test Links:</h2>
+            <ul>
+                <li><a href="http://localhost:5173/session/Pull-Volume/Biceps%20Pump">With encoded space (%20)</a></li>
+                <li><a href="http://localhost:5173/session/Pull-Volume/Biceps Pump">With literal space</a></li>
+            </ul>
+        `;
+        
+        console.log("URL parsing test:");
+        console.log("Raw:", url);
+        console.log("Decoded:", decoded);
+        console.log("Parts:", parts);
+    </script>
+</body>
+</html>

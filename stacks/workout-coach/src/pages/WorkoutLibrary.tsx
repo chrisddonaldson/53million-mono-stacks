@@ -3,15 +3,13 @@ import { useNavigate } from "@solidjs/router";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { workoutActions } from "../stores/workoutStore";
-import { WorkflowEngine } from "../engines/workflow/WorkflowEngine";
-import { formatDuration } from "../lib/utils";
 
 export default function WorkoutLibrary() {
   const navigate = useNavigate();
-  const variants = workoutActions.getAllVariants();
+  const microworkouts = workoutActions.getAllMicroworkouts();
 
-  const handleSelectWorkout = (variantId: string) => {
-    navigate(`/session/${variantId}`);
+  const handleSelectWorkout = (microworkoutId: string) => {
+    navigate(`/session/${microworkoutId}`);
   };
 
   return (
@@ -28,16 +26,20 @@ export default function WorkoutLibrary() {
         </div>
 
         <div class="grid gap-4 md:grid-cols-2">
-          <For each={variants}>
-            {({ id, variant }) => {
-              const summary = WorkflowEngine.getWorkoutSummary(variant);
+          <For each={microworkouts}>
+            {({ id, microworkout, parentVariant }) => {
               const isFavorite = workoutActions.isFavorite(id);
+              const totalSets = microworkout.items.reduce((sum, item) => sum + item.sets, 0);
+              const totalExercises = microworkout.items.length;
 
               return (
                 <Card class="hover:shadow-lg transition-shadow cursor-pointer">
                   <CardHeader>
                     <div class="flex items-start justify-between">
-                      <CardTitle class="text-xl">{id}</CardTitle>
+                      <div>
+                        <CardTitle class="text-xl">{microworkout.title}</CardTitle>
+                        <div class="text-xs text-muted-foreground mt-1">{parentVariant}</div>
+                      </div>
                       <button
                         class="text-2xl"
                         onClick={(e) => {
@@ -53,27 +55,21 @@ export default function WorkoutLibrary() {
                     <div class="grid grid-cols-2 gap-2 text-sm">
                       <div>
                         <div class="text-muted-foreground">Exercises</div>
-                        <div class="font-medium">{summary.totalExercises}</div>
+                        <div class="font-medium">{totalExercises}</div>
                       </div>
                       <div>
                         <div class="text-muted-foreground">Total Sets</div>
-                        <div class="font-medium">{summary.totalSets}</div>
-                      </div>
-                      <div class="col-span-2">
-                        <div class="text-muted-foreground">Est. Duration</div>
-                        <div class="font-medium">
-                          {formatDuration(summary.estimatedDuration)}
-                        </div>
+                        <div class="font-medium">{totalSets}</div>
                       </div>
                     </div>
 
                     <div class="space-y-2">
-                      <div class="text-sm font-medium">Major Lifts:</div>
+                      <div class="text-sm font-medium">Exercises:</div>
                       <div class="flex flex-wrap gap-2">
-                        <For each={variant.major}>
-                          {(lift) => (
+                        <For each={microworkout.items}>
+                          {(exercise) => (
                             <span class="text-xs bg-primary/10 px-2 py-1 rounded">
-                              {lift.lift}
+                              {exercise.name}
                             </span>
                           )}
                         </For>

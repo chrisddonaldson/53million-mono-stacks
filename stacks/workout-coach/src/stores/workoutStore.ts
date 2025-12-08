@@ -1,6 +1,7 @@
 import { createStore } from "solid-js/store";
 import { WORKOUT_PROFILES, DEFAULT_WORKOUT_PROFILE_ID } from "../data/workouts/profiles";
-import type { Config, WorkoutVariant } from "../types/config";
+import { FULL_WORKOUT_ARRAY } from "../data/workouts/full-workout-array";
+import type { Config, WorkoutVariant, MajorLift, MicroWorkout } from "../types/config";
 
 interface WorkoutStoreState {
   profiles: Record<string, Config>;
@@ -50,20 +51,88 @@ export const workoutActions = {
   },
 
   getWorkoutVariant(variantId: string): WorkoutVariant | null {
-    const profile = this.getCurrentProfile();
-    return profile.variants[variantId] || null;
+    // Build variant from FULL_WORKOUT_ARRAY
+    const sections = FULL_WORKOUT_ARRAY.filter(section => section.workout === variantId);
+    
+    if (sections.length === 0) return null;
+
+    const major: MajorLift[] = [];
+    const micro: MicroWorkout[] = [];
+
+    sections.forEach(section => {
+      if (section.sectionType === "major") {
+        major.push({
+          lift: section.lift,
+          sets: section.sets,
+          reps: section.reps,
+          percent: section.percent,
+        });
+      } else if (section.sectionType === "micro") {
+        micro.push({
+          title: section.title,
+          items: section.items,
+        });
+      }
+    });
+
+    return { major, micro };
   },
 
   getAllVariants(): Array<{ id: string; variant: WorkoutVariant; profile: string }> {
+    // Get unique workout names from FULL_WORKOUT_ARRAY
+    const workoutNames = new Set<string>();
+    FULL_WORKOUT_ARRAY.forEach(section => {
+      workoutNames.add(section.workout);
+    });
+
     const variants: Array<{ id: string; variant: WorkoutVariant; profile: string }> = [];
-    
-    Object.entries(workoutStore.profiles).forEach(([profileId, profile]) => {
-      Object.entries(profile.variants).forEach(([variantId, variant]) => {
-        variants.push({ id: variantId, variant, profile: profileId });
-      });
+
+    workoutNames.forEach(workoutName => {
+      const variant = this.getWorkoutVariant(workoutName);
+      if (variant) {
+        // Determine which profile this workout belongs to
+        const profile = this._getProfileForWorkout(workoutName);
+        variants.push({
+          id: workoutName,
+          variant,
+          profile,
+        });
+      }
     });
 
     return variants;
+  },
+
+  getAllMicroworkouts(): Array<{ id: string; microworkout: { title: string; items: any[] }; parentVariant: string; profile: string }> {
+    const microworkouts: Array<{ id: string; microworkout: { title: string; items: any[] }; parentVariant: string; profile: string }> = [];
+    
+    FULL_WORKOUT_ARRAY.forEach(section => {
+      if (section.sectionType === "micro") {
+        const profile = this._getProfileForWorkout(section.workout);
+        microworkouts.push({
+          id: `${section.workout}/${section.title}`,
+          microworkout: {
+            title: section.title,
+            items: section.items,
+          },
+          parentVariant: section.workout,
+          profile,
+        });
+      }
+    });
+
+    return microworkouts;
+  },
+
+  _getProfileForWorkout(workoutName: string): string {
+    // Helper function to determine which profile a workout belongs to
+    // Based on the original profiles.ts structure
+    const chrisWorkouts = ["Pull-Volume", "Calisthenics", "Pull", "Push-Strength", "Push-Volume"];
+    const ancaWorkouts = ["Upper-Strength", "Lower-Strength", "Upper-Volume", "Lower-Volume"];
+    
+    if (chrisWorkouts.includes(workoutName)) return "chris";
+    if (ancaWorkouts.includes(workoutName)) return "anca";
+    return "chris"; // default
   },
 
   isFavorite(variantId: string): boolean {
