@@ -37,7 +37,7 @@ export const api = {
       condition: Math.random() > 0.5 ? 'Sunny' : 'Partly Cloudy',
       high: 78,
       low: 65,
-      location: 'San Francisco, CA'
+      location: 'London, UK'
     };
   },
 

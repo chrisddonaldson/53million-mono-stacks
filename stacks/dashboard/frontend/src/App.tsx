@@ -8,7 +8,7 @@ import RSSWidget from './components/widgets/RSSWidget';
 const App: Component = () => {
   return (
     <div class="min-h-screen bg-neutral-900 text-white p-6 md:p-12 overflow-hidden">
-      <div class="max-w-7xl mx-auto h-[calc(100vh-6rem)] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-rows-3 gap-6">
+      <div class="h-[calc(100vh-6rem)] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-rows-3 gap-6">
         
         {/* Top Row: Time & Weather */}
         <TimeWidget />
