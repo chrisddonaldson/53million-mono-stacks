@@ -6,6 +6,7 @@ import CalendarWidget from './components/widgets/CalendarWidget';
 import RSSWidget from './components/widgets/RSSWidget';
 import SunriseSunsetWidget from './components/widgets/SunriseSunsetWidget';
 import MoonPhaseWidget from './components/widgets/MoonPhaseWidget';
+import MapWidget from './components/widgets/MapWidget';
 
 const App: Component = () => {
   return (
@@ -16,10 +17,13 @@ const App: Component = () => {
         <TimeWidget />
         <WeatherWidget />
         
-        {/* Astronomy Group */}
-        <div class="grid grid-cols-2 gap-4">
+        {/* Astronomy & Map Group */}
+        <div class="grid grid-cols-2 grid-rows-2 gap-4">
           <SunriseSunsetWidget />
           <MoonPhaseWidget />
+          <div class="col-span-2 row-span-1">
+             <MapWidget />
+          </div>
         </div>
         
         {/* Middle/Bottom: Calendar gets vertical space */}
