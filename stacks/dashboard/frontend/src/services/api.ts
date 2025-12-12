@@ -1,11 +1,18 @@
 
 // Mock Data Types
+export interface WeatherForecast {
+  time: string;
+  temp: number;
+  condition: 'Sunny' | 'Cloudy' | 'Rain' | 'Partly Cloudy';
+}
+
 export interface WeatherData {
   temp: number;
   condition: string;
   high: number;
   low: number;
   location: string;
+  forecast: WeatherForecast[];
 }
 
 export interface CalendarEvent {
@@ -29,15 +36,21 @@ export const api = {
     // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 800));
     
-    // Randomize slightly to show updates
-    const temp = 72 + Math.floor(Math.random() * 5);
+    // Celsius temperature (e.g., 5-25 range)
+    const temp = 12 + Math.floor(Math.random() * 5);
     
     return {
       temp,
       condition: Math.random() > 0.5 ? 'Sunny' : 'Partly Cloudy',
-      high: 78,
-      low: 65,
-      location: 'London, UK'
+      high: temp + 4,
+      low: temp - 3,
+      location: 'London, UK',
+      forecast: [
+        { time: 'Now', temp: temp, condition: 'Sunny' },
+        { time: '+1h', temp: temp + 1, condition: 'Partly Cloudy' },
+        { time: '+2h', temp: temp + 1, condition: 'Cloudy' },
+        { time: '+3h', temp: temp - 1, condition: 'Rain' },
+      ]
     };
   },
 
