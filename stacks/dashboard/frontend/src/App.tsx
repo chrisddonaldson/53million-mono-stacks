@@ -4,15 +4,23 @@ import TimeWidget from './components/widgets/TimeWidget';
 import WeatherWidget from './components/widgets/WeatherWidget';
 import CalendarWidget from './components/widgets/CalendarWidget';
 import RSSWidget from './components/widgets/RSSWidget';
+import SunriseSunsetWidget from './components/widgets/SunriseSunsetWidget';
+import MoonPhaseWidget from './components/widgets/MoonPhaseWidget';
 
 const App: Component = () => {
   return (
     <div class="min-h-screen bg-neutral-900 text-white p-6 md:p-12 overflow-hidden">
       <div class="h-[calc(100vh-6rem)] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-rows-3 gap-6">
         
-        {/* Top Row: Time & Weather */}
+        {/* Top Row: Time & Weather & Astronomy */}
         <TimeWidget />
         <WeatherWidget />
+        
+        {/* Astronomy Group */}
+        <div class="grid grid-cols-2 gap-4">
+          <SunriseSunsetWidget />
+          <MoonPhaseWidget />
+        </div>
         
         {/* Middle/Bottom: Calendar gets vertical space */}
         <CalendarWidget />
