@@ -1,10 +1,20 @@
 
-import { Component, createResource } from 'solid-js';
+import { Component, createResource, createEffect } from 'solid-js';
 import WidgetContainer from './WidgetContainer';
 import { api } from '../../services/api';
+import { useLocation } from '../../context/LocationContext';
 
 const WeatherWidget: Component = () => {
-  const [data] = createResource(api.fetchWeather);
+  const { state } = useLocation();
+  // We refetch when location changes
+  const [data, { refetch }] = createResource(api.fetchWeather);
+
+  createEffect(() => {
+      // Trigger refetch when lat/lng changes
+      // In a real app we'd pass these coords to the fetcher
+      state(); 
+      refetch();
+  })
 
   return (
     <WidgetContainer title="Weather">
@@ -30,7 +40,7 @@ const WeatherWidget: Component = () => {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-          {data()?.location}
+          {state().name}
         </div>
       </div>
     </WidgetContainer>

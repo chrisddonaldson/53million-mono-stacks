@@ -1,13 +1,16 @@
 
 import { Component } from 'solid-js';
 import WidgetContainer from './WidgetContainer';
+import { useLocation } from '../../context/LocationContext';
 
 const MapWidget: Component = () => {
-  // Using the simple embed iframe method which doesn't require an exposed API key for basic usage
-  // Default to London
-  const location = "London,UK";
-  const encodedLocation = encodeURIComponent(location);
-  const mapUrl = `https://maps.google.com/maps?q=${encodedLocation}&t=&z=12&ie=UTF8&iwloc=&output=embed`;
+  const { state } = useLocation();
+  
+  // Construct URL dynamically based on state
+  const mapUrl = () => {
+      const { lat, lng } = state();
+      return `https://maps.google.com/maps?q=${lat},${lng}&t=&z=12&ie=UTF8&iwloc=&output=embed`;
+  };
 
   return (
     <WidgetContainer title="Location" className="min-h-[200px]">
@@ -15,7 +18,7 @@ const MapWidget: Component = () => {
         <iframe
           width="100%"
           height="100%"
-          src={mapUrl}
+          src={mapUrl()}
           style={{ border: 0 }}
           loading="lazy"
           allowfullscreen={false}

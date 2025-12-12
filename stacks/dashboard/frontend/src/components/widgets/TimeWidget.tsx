@@ -1,8 +1,10 @@
 
 import { Component, createSignal, onCleanup } from 'solid-js';
 import WidgetContainer from './WidgetContainer';
+import { useLocation } from '../../context/LocationContext';
 
 const TimeWidget: Component = () => {
+  const { state } = useLocation();
   const [now, setNow] = createSignal(new Date());
 
   const timer = setInterval(() => {
@@ -14,13 +16,15 @@ const TimeWidget: Component = () => {
   const timeString = () => now().toLocaleTimeString('en-US', { 
     hour: 'numeric', 
     minute: '2-digit', 
-    hour12: true 
+    hour12: true,
+    timeZone: state().timezone
   });
 
   const dateString = () => now().toLocaleDateString('en-US', { 
     weekday: 'long', 
     month: 'long', 
-    day: 'numeric' 
+    day: 'numeric',
+    timeZone: state().timezone
   });
 
   return (
@@ -31,6 +35,9 @@ const TimeWidget: Component = () => {
         </div>
         <div class="text-xl md:text-2xl text-neutral-400 font-medium mt-2">
           {dateString()}
+        </div>
+        <div class="text-xs text-neutral-600 mt-2 font-mono">
+            {state().timezone}
         </div>
       </div>
     </WidgetContainer>

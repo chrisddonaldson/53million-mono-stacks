@@ -1,18 +1,20 @@
 
-import { Component, createSignal, onCleanup, onMount } from 'solid-js';
+import { Component, createSignal, onCleanup, createEffect } from 'solid-js';
 import WidgetContainer from './WidgetContainer';
 import SunCalc from 'suncalc';
+import { useLocation } from '../../context/LocationContext';
 
 const SunriseSunsetWidget: Component = () => {
-  // London coordinates
-  const LAT = 51.5074;
-  const LNG = -0.1278;
+  const { state } = useLocation();
+  const [times, setTimes] = createSignal(SunCalc.getTimes(new Date(), state().lat, state().lng));
 
-  const [times, setTimes] = createSignal(SunCalc.getTimes(new Date(), LAT, LNG));
+  createEffect(() => {
+    setTimes(SunCalc.getTimes(new Date(), state().lat, state().lng));
+  });
 
   // Update daily (or reasonably often to catch date changes)
   const timer = setInterval(() => {
-    setTimes(SunCalc.getTimes(new Date(), LAT, LNG));
+    setTimes(SunCalc.getTimes(new Date(), state().lat, state().lng));
   }, 60000 * 15); // Every 15 mins
 
   onCleanup(() => clearInterval(timer));
@@ -44,7 +46,7 @@ const SunriseSunsetWidget: Component = () => {
             <span class="text-xl font-medium text-white">{formatTime(times().sunset)}</span>
           </div>
         </div>
-        <div class="text-xs text-neutral-600">London, UK</div>
+        <div class="text-xs text-neutral-600">{state().name}</div>
       </div>
     </WidgetContainer>
   );
