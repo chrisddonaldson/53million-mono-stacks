@@ -1,30 +1,32 @@
-import { createSignal, onCleanup, Component } from 'solid-js';
+
+import { Component } from 'solid-js';
+import TimeWidget from './components/widgets/TimeWidget';
+import WeatherWidget from './components/widgets/WeatherWidget';
+import CalendarWidget from './components/widgets/CalendarWidget';
+import RSSWidget from './components/widgets/RSSWidget';
 
 const App: Component = () => {
-  const [time, setTime] = createSignal(new Date());
-
-  const timer = setInterval(() => setTime(new Date()), 1000);
-  onCleanup(() => clearInterval(timer));
-
   return (
-    <div class="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-4">
-      <header class="mb-8">
-        <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
-          Personal Dashboard
-        </h1>
-      </header>
+    <div class="min-h-screen bg-neutral-900 text-white p-6 md:p-12 overflow-hidden">
+      <div class="max-w-7xl mx-auto h-[calc(100vh-6rem)] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-rows-3 gap-6">
+        
+        {/* Top Row: Time & Weather */}
+        <TimeWidget />
+        <WeatherWidget />
+        
+        {/* Middle/Bottom: Calendar gets vertical space */}
+        <CalendarWidget />
+
+        {/* Bottom Area: RSS Feed takes remaining width */}
+        <RSSWidget />
+        
+      </div>
       
-      <main class="w-full max-w-md p-6 bg-slate-800 rounded-2xl shadow-xl border border-slate-700">
-        <div class="text-center">
-          <h2 class="text-lg text-slate-400 uppercase tracking-wider mb-2">Current Time</h2>
-          <div class="text-6xl font-mono font-light tracking-tight tabular-nums" aria-label="Current time">
-            {time().toLocaleTimeString([], { hour12: false })}
-          </div>
-          <div class="mt-2 text-slate-500">
-            {time().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </div>
-        </div>
-      </main>
+      {/* Background decoration */}
+      <div class="fixed inset-0 pointer-events-none z-[-1]">
+        <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-900/10 rounded-full blur-[100px]"></div>
+        <div class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-900/10 rounded-full blur-[100px]"></div>
+      </div>
     </div>
   );
 };
