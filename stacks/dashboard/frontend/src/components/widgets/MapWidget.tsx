@@ -13,7 +13,7 @@ const MapWidget: Component = () => {
   };
 
   return (
-    <WidgetContainer title="Location" className="min-h-[200px]">
+    <WidgetContainer title="Location" className="h-full">
       <div class="h-full w-full rounded-lg overflow-hidden relative grayscale hover:grayscale-0 transition-all duration-500">
         <iframe
           width="100%"

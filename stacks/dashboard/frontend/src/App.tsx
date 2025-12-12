@@ -15,28 +15,40 @@ const App: Component = () => {
     <LocationProvider>
       <div class="min-h-screen bg-neutral-900 text-white p-6 md:p-12 overflow-hidden">
         <div class="h-[calc(100vh-6rem)] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-rows-3 gap-6">
-          
-          {/* Top Row: Time & Weather & Astronomy */}
-          <TimeWidget />
-          <WeatherWidget />
-          
-          {/* Astronomy & Map Group */}
-          <div class="grid grid-cols-2 grid-rows-2 gap-4">
-            <SunriseSunsetWidget />
-            <MoonPhaseWidget />
-            <div class="col-span-2 row-span-1 grid grid-cols-2 gap-4">
-               <LocationWidget />
+        
+        {/* Row 1: Time & Weather & Map */}
+        <TimeWidget />
+        <WeatherWidget />
+        
+        {/* Map & Location Group */}
+        <div class="flex flex-col gap-4 h-full"> 
+           <div class="flex-none">
+             <LocationWidget />
+           </div>
+           <div class="flex-grow min-h-0 relative">
+             <div class="absolute inset-0">
                <MapWidget />
-            </div>
-          </div>
-          
-          {/* Middle/Bottom: Calendar gets vertical space */}
-          <CalendarWidget />
-
-          {/* Bottom Area: RSS Feed takes remaining width */}
-          <RSSWidget />
-          
+             </div>
+           </div>
         </div>
+        
+        {/* Row 2: Calendar (Wide) & Sun/Moon */}
+        <div class="lg:col-span-2">
+            <CalendarWidget />
+        </div>
+
+        {/* Astronomy Group */}
+        <div class="grid grid-cols-2 gap-4">
+          <SunriseSunsetWidget />
+          <MoonPhaseWidget />
+        </div>
+
+        {/* Row 3: RSS Feed (Full Width) */}
+        <div class="lg:col-span-3">
+          <RSSWidget />
+        </div>
+        
+      </div>
         
         {/* Background decoration */}
         <div class="fixed inset-0 pointer-events-none z-[-1]">

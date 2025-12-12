@@ -7,7 +7,7 @@ const RSSWidget: Component = () => {
   const [items] = createResource(api.fetchRSSHeadlines);
 
   return (
-    <WidgetContainer title="Latest News" className="col-span-1 lg:col-span-2">
+    <WidgetContainer title="Latest News" className="h-full">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <For each={items()}>
           {(item) => (

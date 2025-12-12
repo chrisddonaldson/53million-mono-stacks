@@ -11,7 +11,7 @@ const CalendarWidget: Component = () => {
   };
 
   return (
-    <WidgetContainer title="Calendar" className="row-span-2">
+    <WidgetContainer title="Calendar" className="h-full">
       <div class="relative h-full">
         <div class="absolute inset-0 overflow-y-auto pr-2 space-y-3">
           <For each={events()}>
