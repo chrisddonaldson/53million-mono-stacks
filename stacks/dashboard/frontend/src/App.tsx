@@ -7,7 +7,7 @@ import RSSWidget from './components/widgets/RSSWidget';
 import SunriseSunsetWidget from './components/widgets/SunriseSunsetWidget';
 import MoonPhaseWidget from './components/widgets/MoonPhaseWidget';
 import MapWidget from './components/widgets/MapWidget';
-import LocationWidget from './components/widgets/LocationWidget';
+import TrainWidget from './components/widgets/TrainWidget';
 import { LocationProvider } from './context/LocationContext';
 
 const App: Component = () => {
@@ -19,18 +19,7 @@ const App: Component = () => {
         {/* Row 1: Time & Weather & Map */}
         <TimeWidget />
         <WeatherWidget />
-        
-        {/* Map & Location Group */}
-        <div class="flex flex-col gap-4 h-full"> 
-           <div class="flex-none">
-             <LocationWidget />
-           </div>
-           <div class="flex-grow min-h-0 relative">
-             <div class="absolute inset-0">
-               <MapWidget />
-             </div>
-           </div>
-        </div>
+        <MapWidget />
         
         {/* Row 2: Calendar (Wide) & Sun/Moon */}
         <div class="lg:col-span-2">
@@ -43,10 +32,11 @@ const App: Component = () => {
           <MoonPhaseWidget />
         </div>
 
-        {/* Row 3: RSS Feed (Full Width) */}
-        <div class="lg:col-span-3">
+        {/* Row 3: RSS Feed & Train */}
+        <div class="lg:col-span-2">
           <RSSWidget />
         </div>
+        <TrainWidget />
         
       </div>
         

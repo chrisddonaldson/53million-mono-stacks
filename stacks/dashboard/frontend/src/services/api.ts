@@ -30,6 +30,14 @@ export interface RSSItem {
   publishedAt: Date;
 }
 
+export interface TrainDeparture {
+  id: string;
+  destination: string;
+  dueInMinutes: number;
+  status: 'On Time' | 'Delayed' | 'Cancelled';
+  platform: string;
+}
+
 // Mock API Service
 export const api = {
   fetchWeather: async (): Promise<WeatherData> => {
@@ -108,5 +116,34 @@ export const api = {
         publishedAt: new Date(Date.now() - 7200000)
       }
     ];
+  },
+
+  fetchTrainDepartures: async (): Promise<TrainDeparture[]> => {
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      
+      // West Ealing to Stratford (Elizabeth Line usually Platform 4)
+      return [
+          {
+              id: '1',
+              destination: 'Stratford',
+              dueInMinutes: 2,
+              status: 'On Time',
+              platform: '4'
+          },
+          {
+              id: '2',
+              destination: 'Stratford',
+              dueInMinutes: 8,
+              status: 'On Time',
+              platform: '4'
+          },
+          {
+              id: '3',
+              destination: 'Shenfield',
+              dueInMinutes: 16,
+              status: 'Delayed',
+              platform: '4'
+          }
+      ];
   }
 };
