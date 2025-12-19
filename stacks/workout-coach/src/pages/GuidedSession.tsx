@@ -225,7 +225,7 @@ export default function GuidedSession() {
       if (webgpuSuccess) {
         setRenderingSupported(true);
         webgpuEngine.startRenderLoop(() => ({
-          time: elapsed(),
+          time: performance.now() / 1000, 
           intensity: sessionGetters.getCurrentStep()?.visualIntensity || 0.3,
           tempoPhase: tempoProgress(),
           screenSize: [window.innerWidth, window.innerHeight],
@@ -239,7 +239,7 @@ export default function GuidedSession() {
         if (webglSuccess) {
           setRenderingSupported(true);
           webglEngine.startRenderLoop(() => ({
-            time: elapsed(),
+            time: performance.now() / 1000,
             intensity: sessionGetters.getCurrentStep()?.visualIntensity || 0.3,
             tempoPhase: tempoProgress(),
             screenSize: [window.innerWidth, window.innerHeight],
