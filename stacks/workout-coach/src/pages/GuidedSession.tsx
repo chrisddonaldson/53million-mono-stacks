@@ -241,9 +241,11 @@ export default function GuidedSession() {
         );
         console.log("CHECKPOINT 5: Timeline generated:", timeline.length, "steps");
       } else if (workoutId === "wrist_extension_training_system" || workoutId === "wrist-workout") {
-         console.log("CHECKPOINT 6.5: New YAML workout mode detected");
+      console.log("CHECKPOINT 6.5: New YAML workout mode detected");
          // Cast the imported yaml to our type
          const yamlData = wristWorkout as unknown as YamlWorkout;
+         console.log("YAML Data:", yamlData);
+         
          const generator = new YamlStepGenerator(yamlData, {
             globalRestTime: settingsStore.workout.defaultRestTime,
             voiceEnabled: settingsStore.audio.voiceVolume > 0,
@@ -252,6 +254,7 @@ export default function GuidedSession() {
             progressionVariant: "standard",
          });
          timeline = generator.generateTimeline();
+         console.log("Timeline generated from YAML:", timeline);
       } else {
         console.log("CHECKPOINT 6: Full workout mode");
         // Full workout variant session
@@ -298,8 +301,28 @@ export default function GuidedSession() {
       console.log("CHECKPOINT 13: Trying WebGPU...");
       // Try WebGPU first
       webgpuEngine = new WebGPUEngine();
-      const webgpuSuccess = await webgpuEngine.init(canvasRef, intensityShader);
-      console.log("CHECKPOINT 14: WebGPU init result:", webgpuSuccess);
+      
+      // Add timeout to WebGPU init
+      const timeoutMs = 3000;
+      const timeoutPromise = new Promise<boolean>((_, reject) => {
+        setTimeout(() => reject(new Error(`WebGPU init timed out after ${timeoutMs}ms`)), timeoutMs);
+      });
+
+      let webgpuSuccess = false;
+      try {
+        console.log("Starting WebGPU init race...");
+        // Assuming webgpuEngine.init returns Promise<boolean>
+        webgpuSuccess = await Promise.race([
+          webgpuEngine.init(canvasRef, intensityShader),
+          timeoutPromise
+        ]);
+        console.log("WebGPU init race finished, success:", webgpuSuccess);
+      } catch (e) {
+        console.warn("WebGPU init failed or timed out:", e);
+        webgpuSuccess = false;
+      }
+      
+      console.log("CHECKPOINT 14: WebGPU final result:", webgpuSuccess);
 
       if (webgpuSuccess) {
         setRenderingSupported(true);
