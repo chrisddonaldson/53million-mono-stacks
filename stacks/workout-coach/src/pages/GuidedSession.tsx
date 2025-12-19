@@ -1,4 +1,4 @@
-import { createSignal, onMount, onCleanup, Show } from "solid-js";
+import { createSignal, onMount, onCleanup, Show, createEffect } from "solid-js";
 import { useParams, useNavigate } from "@solidjs/router";
 import { sessionStore, sessionActions, sessionGetters } from "../stores/sessionStore";
 import { workoutActions } from "../stores/workoutStore";
@@ -31,7 +31,8 @@ export default function GuidedSession() {
   const [initError, setInitError] = createSignal<string | null>(null);
   const [isLoading, setIsLoading] = createSignal(true);
   
-  let canvasRef: HTMLCanvasElement | undefined;
+  let webgpuCanvasRef: HTMLCanvasElement | undefined;
+  let webglCanvasRef: HTMLCanvasElement | undefined;
   
   // Early return test to ensure component renders
   if (!params.id) {
@@ -69,6 +70,39 @@ export default function GuidedSession() {
   const [tempoProgress, setTempoProgress] = createSignal(0);
   const [currentRep, setCurrentRep] = createSignal(0);
   const [tempoPhase, setTempoPhase] = createSignal<string>("down");
+
+  createEffect(() => {
+    if (fallbackToWebGL()) {
+      console.log("Fallback signal active, initializing WebGL...");
+      
+      // Ensure canvas is ready (ref updated)
+      if (!webglCanvasRef) {
+        console.error("Canvas ref missing in fallback effect");
+        setRenderingSupported(false);
+        return;
+      }
+      
+      // Cleanup any existing engine just in case
+      if (webglEngine) webglEngine.destroy();
+
+      webglEngine = new WebGLEngine();
+      const webglSuccess = webglEngine.init(webglCanvasRef, vertexShader, fragmentShader);
+      
+      if (webglSuccess) {
+        console.log("WebGL init successful");
+        setRenderingSupported(true);
+        webglEngine.startRenderLoop(() => ({
+          time: performance.now() / 1000,
+          intensity: sessionGetters.getCurrentStep()?.visualIntensity || 0.3,
+          tempoPhase: tempoProgress(),
+          screenSize: [window.innerWidth, window.innerHeight],
+        }));
+      } else {
+        console.error("WebGL init failed in effect");
+        setRenderingSupported(false);
+      }
+    }
+  });
 
   onMount(async () => {
     try {
@@ -193,8 +227,10 @@ export default function GuidedSession() {
 
         sessionEngine.on("cue", (cue: any) => {
             if (settingsStore.audio.voiceVolume > 0) {
-               if (cue.type === 'tempo') {
+               if (cue.type === "tempo") {
                    voiceCoach.announceTempo(cue.phase);
+               } else if (cue.type === "rep") {
+                   voiceCoach.announceRep(cue.rep, cue.totalReps);
                } else {
                    voiceCoach.announce(cue);
                }
@@ -204,7 +240,7 @@ export default function GuidedSession() {
 
     // Initialize WebGPU or WebGL (with fallback)
     console.log("CHECKPOINT 12: Initializing graphics...");
-    if (canvasRef) {
+    if (webgpuCanvasRef) {
       // Try WebGPU first
       webgpuEngine = new WebGPUEngine();
       
@@ -216,7 +252,7 @@ export default function GuidedSession() {
       let webgpuSuccess = false;
       try {
         webgpuSuccess = await Promise.race([
-          webgpuEngine.init(canvasRef, intensityShader),
+        webgpuEngine.init(webgpuCanvasRef, intensityShader),
           timeoutPromise
         ]);
       } catch (e) {
@@ -235,34 +271,9 @@ export default function GuidedSession() {
       } else {
         // Fallback to WebGL
         console.warn("Falling back to WebGL...");
-        setFallbackToWebGL(true);
         webgpuEngine = null;
-        
-        // Give SolidJS a moment to unmount/remount the canvas with new key
-        setTimeout(() => {
-            if (!canvasRef) {
-                console.error("Canvas ref missing after fallback update");
-                setRenderingSupported(false);
-                return;
-            }
-            
-            webglEngine = new WebGLEngine();
-            const webglSuccess = webglEngine.init(canvasRef, vertexShader, fragmentShader);
-            
-            if (webglSuccess) {
-              console.log("WebGL init successful");
-              setRenderingSupported(true);
-              webglEngine.startRenderLoop(() => ({
-                time: performance.now() / 1000,
-                intensity: sessionGetters.getCurrentStep()?.visualIntensity || 0.3,
-                tempoPhase: tempoProgress(),
-                screenSize: [window.innerWidth, window.innerHeight],
-              }));
-            } else {
-              console.error("WebGL init failed");
-              setRenderingSupported(false);
-            }
-        }, 50);
+        setFallbackToWebGL(true);
+        // Effect will handle init
       }
     }
 
@@ -388,14 +399,16 @@ export default function GuidedSession() {
       }>
         <Show when={!fallbackToWebGL()} fallback={
           <canvas
-            ref={canvasRef}
+            id="webgl-canvas"
+            ref={webglCanvasRef}
             width={window.innerWidth}
             height={window.innerHeight}
             class="absolute inset-0"
           />
         }>
           <canvas
-            ref={canvasRef}
+            id="webgpu-canvas"
+            ref={webgpuCanvasRef}
             width={window.innerWidth}
             height={window.innerHeight}
             class="absolute inset-0"
@@ -461,7 +474,7 @@ export default function GuidedSession() {
                   </Show>
 
                   {/* Tempo display for tempo-based exercises */}
-                  <Show when={step().tempo && sessionEngine}>
+                  <Show when={(step().tempo || step().repStructure) && sessionEngine}>
                     <div class="text-center space-y-2">
                       <div class="text-sm text-gray-400">
                         Rep {currentRep()} of {step().exercise?.reps}

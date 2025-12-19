@@ -10,6 +10,8 @@ export class SessionEngine {
   private session: GuidedSession; // This is a reference to the store proxy
   private timer: IntervalTimer; // For duration-based steps
   private tempoEngine: TempoEngine | null = null;
+  private tempoTargetReps: number = 0;
+  private lastTempoRep: number = 0;
   private listeners: Record<EventType, EventHandler[]> = {
     tick: [],
     stepChange: [],
@@ -69,7 +71,8 @@ export class SessionEngine {
 
     const currentStep = this.getCurrentStep();
     if (currentStep) {
-        if (currentStep.type === "work" && currentStep.repStructure && currentStep.repStructure.length > 0 && currentStep.exercise) {
+        const tempoReps = currentStep.exercise?.reps ?? currentStep.totalReps ?? 0;
+        if (currentStep.type === "work" && currentStep.repStructure && currentStep.repStructure.length > 0 && tempoReps > 0) {
             // Emit current phase cue on resume to re-orient user
             if (this.tempoEngine) {
                  const currentPhase = this.tempoEngine.getCurrentPhase();
@@ -136,11 +139,17 @@ export class SessionEngine {
         }
     }
 
-    if (step.type === "work" && step.repStructure && step.repStructure.length > 0 && step.exercise) {
+    const tempoReps = step.exercise?.reps ?? step.totalReps ?? 0;
+    if (step.type === "work" && step.repStructure && step.repStructure.length > 0 && tempoReps > 0) {
       // Tempo based
       this.timer.stop(); 
-      this.tempoEngine = new TempoEngine(step.repStructure, step.exercise.reps);
+      this.tempoTargetReps = tempoReps;
+      this.tempoEngine = new TempoEngine(step.repStructure, this.tempoTargetReps);
       this.tempoEngine.start();
+      this.lastTempoRep = 1;
+      if (this.tempoTargetReps > 0) {
+        this.emit("cue", { type: "rep", rep: this.lastTempoRep, totalReps: this.tempoTargetReps });
+      }
       // Emit initial cue for the first phase
       const initialPhase = this.tempoEngine.getCurrentPhase();
       this.emit("cue", { type: "tempo", phase: initialPhase.type });
@@ -182,6 +191,10 @@ export class SessionEngine {
           
           if (this.tempoEngine) {
               const event = this.tempoEngine.update(dt, (e: TempoEvent) => {
+                  if (e.rep !== this.lastTempoRep && e.rep <= this.tempoTargetReps) {
+                      this.lastTempoRep = e.rep;
+                      this.emit("cue", { type: "rep", rep: e.rep, totalReps: this.tempoTargetReps });
+                  }
                   this.emit("cue", { type: "tempo", phase: e.phase }); // Let voice coach handle formatting
                   
                   if (this.tempoEngine?.isComplete()) {

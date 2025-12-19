@@ -102,6 +102,15 @@ export class VoiceCoach {
     });
   }
 
+  async announceRep(current: number, total?: number): Promise<void> {
+    const text = total ? `Rep ${current} of ${total}` : `Rep ${current}`;
+    await this.announce({
+      text,
+      time: 0,
+      options: { rate: 1.1, pitch: 1.0 },
+    });
+  }
+
   async announceMotivation(message: string): Promise<void> {
     await this.announce({
       text: message,

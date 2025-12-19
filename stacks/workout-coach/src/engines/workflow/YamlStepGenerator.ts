@@ -86,27 +86,20 @@ export class YamlStepGenerator {
     let duration = 0;
     
     if (exercise.tempo && reps > 0) {
-        // One full rep cycle
+        // One full rep cycle (TempoEngine will loop this for total reps)
         const concentric = exercise.tempo.concentric_seconds;
         const topPause = exercise.tempo.top_pause_seconds;
         const eccentric = exercise.tempo.eccentric_seconds;
         const bottomPause = exercise.tempo.bottom_pause_seconds;
         
-        for(let i=0; i<reps; i++) {
-            // Standard order: Eccentric (lowering) -> Bottom -> Concentric (lifting) -> Top?
-            // Actually usually tempo is written Concentric/Pause/Eccentric/Pause in some notations, or Eccentric first.
-            // The YAML keys are explicit: eccentric_seconds, concentric_seconds.
-            // Let's assume standard lift starts with eccentric (e.g. squat/bench) or concentric (pullup/deadlift)?
-            // For wrist extension (lifting dumbbell), it starts with Concentric (up).
-            // Let's assume Concentric Start for this specific workout type or generally.
-            
-            if (concentric > 0) repStructure.push({ type: 'concentric', duration: concentric });
-            if (topPause > 0) repStructure.push({ type: 'hold', duration: topPause });
-            if (eccentric > 0) repStructure.push({ type: 'eccentric', duration: eccentric });
-            if (bottomPause > 0) repStructure.push({ type: 'hold', duration: bottomPause }); // restful hold?
-        }
+        // Standard order: concentric -> top hold -> eccentric -> bottom hold
+        if (concentric > 0) repStructure.push({ type: 'concentric', duration: concentric });
+        if (topPause > 0) repStructure.push({ type: 'hold', duration: topPause });
+        if (eccentric > 0) repStructure.push({ type: 'eccentric', duration: eccentric });
+        if (bottomPause > 0) repStructure.push({ type: 'hold', duration: bottomPause });
         
-        duration = repStructure.reduce((acc, phase) => acc + phase.duration, 0);
+        const repDuration = repStructure.reduce((acc, phase) => acc + phase.duration, 0);
+        duration = repDuration * reps;
     } else if (exercise.time_seconds) {
         duration = this.val(exercise.time_seconds);
     } else {
