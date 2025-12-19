@@ -3,5 +3,6 @@ export interface RenderUniforms {
   intensity: number;
   tempoPhase: number;
   phaseColor: [number, number, number];
+  phaseType: number;
   screenSize: [number, number];
 }

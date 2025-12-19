@@ -79,6 +79,19 @@ export default function GuidedSession() {
     return [0.5, 0.5, 0.5] as const;
   };
 
+  const getPhaseType = () => {
+    const step = sessionGetters.getCurrentStep();
+    if (step?.type === "rest") return 3;
+    if (step?.type === "setup" || step?.type === "warmup" || step?.type === "transition" || step?.type === "summary") {
+      return 4;
+    }
+    const phase = tempoPhase();
+    if (phase === "concentric" || phase === "up") return 0;
+    if (phase === "hold") return 1;
+    if (phase === "eccentric" || phase === "down") return 2;
+    return 4;
+  };
+
   const getPhaseProgress = () => {
     const step = sessionGetters.getCurrentStep();
     if (step?.repStructure && step.repStructure.length > 0) return tempoProgress();
@@ -235,6 +248,7 @@ export default function GuidedSession() {
           intensity: sessionGetters.getCurrentStep()?.visualIntensity || 0.3,
           tempoPhase: getPhaseProgress(),
           phaseColor: getPhaseColor(),
+          phaseType: getPhaseType(),
           screenSize: [window.innerWidth, window.innerHeight],
         }));
       } else {

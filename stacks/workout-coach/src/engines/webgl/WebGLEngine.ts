@@ -8,12 +8,14 @@ export class WebGLEngine {
     intensity: WebGLUniformLocation | null;
     tempoPhase: WebGLUniformLocation | null;
     phaseColor: WebGLUniformLocation | null;
+    phaseType: WebGLUniformLocation | null;
     resolution: WebGLUniformLocation | null;
   } = {
     time: null,
     intensity: null,
     tempoPhase: null,
     phaseColor: null,
+    phaseType: null,
     resolution: null,
   };
   private animationFrameId: number | null = null;
@@ -68,6 +70,7 @@ export class WebGLEngine {
     this.uniformLocations.intensity = this.gl.getUniformLocation(this.program, 'u_intensity');
     this.uniformLocations.tempoPhase = this.gl.getUniformLocation(this.program, 'u_tempo_phase');
     this.uniformLocations.phaseColor = this.gl.getUniformLocation(this.program, 'u_phase_color');
+    this.uniformLocations.phaseType = this.gl.getUniformLocation(this.program, 'u_phase_type');
     this.uniformLocations.resolution = this.gl.getUniformLocation(this.program, 'u_resolution');
 
     // Create fullscreen quad
@@ -134,6 +137,9 @@ export class WebGLEngine {
         uniforms.phaseColor[1],
         uniforms.phaseColor[2]
       );
+    }
+    if (this.uniformLocations.phaseType) {
+      this.gl.uniform1f(this.uniformLocations.phaseType, uniforms.phaseType);
     }
     if (this.uniformLocations.resolution) {
       this.gl.uniform2f(this.uniformLocations.resolution, this.gl.canvas.width, this.gl.canvas.height);
