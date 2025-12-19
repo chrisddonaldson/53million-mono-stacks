@@ -293,27 +293,7 @@ export default function GuidedSession() {
   const nextStep = () => sessionGetters.getNextStep();
   const progress = () => sessionGetters.getProgress();
 
-  // Show loading state
-  if (isLoading()) {
-    return (
-      <div class="h-screen w-screen flex items-center justify-center bg-black text-white">
-        <div class="text-2xl">Loading workout...</div>
-      </div>
-    );
-  }
-
-  // Show error if initialization failed
-  if (initError()) {
-    return (
-      <div class="h-screen w-screen flex items-center justify-center bg-black text-white">
-        <div class="max-w-2xl p-8 space-y-4">
-          <h1 class="text-2xl font-bold text-red-500">Failed to Load Workout</h1>
-          <p class="text-lg">{initError()}</p>
-          <Button onClick={() => navigate("/library")}>Go to Library</Button>
-        </div>
-      </div>
-    );
-  }
+  // REMOVED early returns for loading/error to allow canvas to mount
 
   return (
     <>
@@ -336,6 +316,24 @@ export default function GuidedSession() {
       />
 
       <div class="relative h-screen w-screen overflow-hidden bg-black">
+        {/* Loading Overlay */}
+        <Show when={isLoading()}>
+          <div class="absolute inset-0 z-50 flex items-center justify-center bg-black text-white">
+            <div class="text-2xl">Loading workout...</div>
+          </div>
+        </Show>
+
+        {/* Error Overlay */}
+        <Show when={initError()}>
+          <div class="absolute inset-0 z-50 flex items-center justify-center bg-black text-white">
+            <div class="max-w-2xl p-8 space-y-4">
+              <h1 class="text-2xl font-bold text-red-500">Failed to Load Workout</h1>
+              <p class="text-lg">{initError()}</p>
+              <Button onClick={() => navigate("/library")}>Go to Library</Button>
+            </div>
+          </div>
+        </Show>
+
       {/* Rendering Canvas (WebGPU or WebGL) */}
       <Show when={renderingSupported()} fallback={
         <div class="flex items-center justify-center h-full text-white">
