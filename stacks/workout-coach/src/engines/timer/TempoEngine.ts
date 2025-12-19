@@ -127,6 +127,10 @@ export class TempoEngine {
     return this.currentRep > this.targetReps;
   }
 
+  getElapsed(): number {
+    return this.elapsed;
+  }
+
   // Parse tempo string like "3-1-1" into Tempo object
   static parseTempo(tempoString: string): Tempo {
     const parts = tempoString.split("-").map(Number);

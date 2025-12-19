@@ -4,11 +4,9 @@ import { sessionStore, sessionActions, sessionGetters } from "../stores/sessionS
 import { workoutActions } from "../stores/workoutStore";
 import { settingsStore } from "../stores/settingsStore";
 import { WorkflowEngine } from "../engines/workflow/WorkflowEngine";
-import { IntervalTimer } from "../engines/timer/IntervalTimer";
 import { VoiceCoach } from "../engines/audio/VoiceCoach";
 import { WebGPUEngine } from "../engines/webgpu/WebGPUEngine";
 import { WebGLEngine } from "../engines/webgl/WebGLEngine";
-import { TempoEngine, type TempoEvent } from "../engines/timer/TempoEngine";
 import { Button } from "../components/ui/Button";
 import { formatTime } from "../lib/utils";
 import SummaryModal from "../components/modals/SummaryModal";
@@ -23,14 +21,12 @@ import wristWorkout from "../data/workouts/wrist-workout.yaml";
 import { YamlStepGenerator } from "../engines/workflow/YamlStepGenerator";
 import TempoVisualizer from "../components/session/TempoVisualizer";
 import type { YamlWorkout } from "../types/yaml-workout";
+import { SessionEngine } from "../engines/SessionEngine";
 
 export default function GuidedSession() {
   console.log("=== GuidedSession COMPONENT RENDER ===");
   const params = useParams();
   const navigate = useNavigate();
-  
-  console.log("GuidedSession params at component level:", params);
-  console.log("GuidedSession params.id at component level:", params.id);
   
   const [initError, setInitError] = createSignal<string | null>(null);
   const [isLoading, setIsLoading] = createSignal(true);
@@ -39,25 +35,29 @@ export default function GuidedSession() {
   
   // Early return test to ensure component renders
   if (!params.id) {
-    console.error("No params.id found!");
     return (
       <div class="h-screen w-screen flex items-center justify-center bg-black text-white">
         <div class="max-w-2xl p-8 space-y-4">
           <h1 class="text-2xl font-bold text-red-500">No Workout ID</h1>
           <p class="text-lg">params.id is missing or empty</p>
-          <p class="text-sm">params: {JSON.stringify(params)}</p>
           <Button onClick={() => navigate("/library")}>Go to Library</Button>
         </div>
       </div>
     );
   }
+
   let webgpuEngine: WebGPUEngine | null = null;
   let webglEngine: WebGLEngine | null = null;
-  let globalTimer: IntervalTimer;
-  let stepTimer: IntervalTimer;
+  
+  // New Engine
+  let sessionEngine: SessionEngine | null = null;
+
+  // Global Timer for updating Elapsed Time in UI if needed separately?
+  // Or handled by SessionEngine events.
+  // We'll keep a simple interval to update elapsed if SessionEngine doesn't emit tick often enough?
+  // SessionEngine emits tick, we can use that.
+
   let voiceCoach: VoiceCoach;
-  let tempoEngine: TempoEngine | null = null;
-  let tempoUpdateInterval: number | null = null;
 
   const [elapsed, setElapsed] = createSignal(0);
   const [stepElapsed, setStepElapsed] = createSignal(0);
@@ -67,166 +67,34 @@ export default function GuidedSession() {
   const [tempoProgress, setTempoProgress] = createSignal(0);
   const [currentRep, setCurrentRep] = createSignal(0);
   const [tempoPhase, setTempoPhase] = createSignal<"down" | "hold" | "up">("down");
-  
-  // Track which voice cues have been triggered for current step
-  let triggeredCues = new Set<number>();
-
-  const startStepTimer = () => {
-    const currentStep = sessionGetters.getCurrentStep();
-    if (!currentStep) return;
-
-    // Reset step timer and voice cue tracking
-    stepTimer?.reset();
-    setStepElapsed(0);
-    triggeredCues.clear();
-
-    // Stop any existing tempo engine
-    if (tempoUpdateInterval !== null) {
-      clearInterval(tempoUpdateInterval);
-      tempoUpdateInterval = null;
-    }
-    tempoEngine?.stop();
-    tempoEngine = null;
-
-    // Check if step has tempo (for tempo-based exercises)
-    if (currentStep.type === "work" && currentStep.tempo && currentStep.exercise) {
-      const reps = currentStep.exercise.reps;
-      tempoEngine = new TempoEngine(currentStep.tempo, reps);
-      tempoEngine.start();
-      
-      setCurrentRep(1);
-      setTempoPhase("down");
-      
-      // Update tempo engine at 60fps
-      let lastTime = performance.now();
-      tempoUpdateInterval = window.setInterval(() => {
-        const now = performance.now();
-        const deltaTime = (now - lastTime) / 1000;
-        lastTime = now;
-        
-        const event = tempoEngine!.update(deltaTime, (tempoEvent: TempoEvent) => {
-          // Phase changed - announce it
-          setTempoPhase(tempoEvent.phase);
-          setCurrentRep(tempoEvent.rep);
-          
-          // Voice cue for phase
-          if (settingsStore.audio.voiceVolume > 0) {
-            voiceCoach.announceTempo(tempoEvent.phase);
-          }
-          
-          // Check if all reps complete
-          if (tempoEngine?.isComplete()) {
-            clearInterval(tempoUpdateInterval!);
-            tempoUpdateInterval = null;
-            handleNext();
-          }
-        });
-        
-        setTempoProgress(event.progress);
-        setCurrentRep(event.rep);
-        setTempoPhase(event.phase);
-      }, 16); // ~60fps
-      
-    } else if (currentStep.duration > 0) {
-      // Standard timed interval (no tempo)
-      stepTimer = new IntervalTimer("countdown", currentStep.duration);
-      stepTimer.start(
-        (e, _remaining) => {
-          setStepElapsed(e);
-          
-          // Check for voice cues that should trigger at this time
-          if (currentStep.voiceCues && settingsStore.audio.voiceVolume > 0) {
-            for (let i = 0; i < currentStep.voiceCues.length; i++) {
-              const cue = currentStep.voiceCues[i];
-              // Trigger if we've reached the cue time and haven't triggered it yet
-              if (e >= cue.time && !triggeredCues.has(i)) {
-                triggeredCues.add(i);
-                voiceCoach.announce(cue);
-              }
-            }
-          }
-        },
-        () => {
-          // Auto-advance when step duration completes
-          handleNext();
-        }
-      );
-    }
-  };
 
   onMount(async () => {
     try {
       console.log("=== GuidedSession onMount START ===");
-      console.log("params:", params);
-      console.log("params.id:", params.id);
-      
-      // Initialize session
-      // The wildcard route *id captures everything after /session/
-      // SolidJS router automatically decodes URL parameters
       const workoutId = params.id || "";
-      
-      console.log("GuidedSession workoutId:", workoutId);
-      console.log("GuidedSession params.id type:", typeof params.id);
-      console.log("GuidedSession workoutId length:", workoutId.length);
-      
-      if (!workoutId) {
-        console.log("No workoutId, navigating to /library");
-        setInitError("No workout ID provided");
-        setIsLoading(false);
-        return;
-      }
       
       console.log("CHECKPOINT 1: Getting profile...");
       const profile = workoutActions.getCurrentProfile();
-      console.log("Profile:", profile);
-      console.log("Profile meta:", profile.meta);
-      console.log("Profile title:", profile.meta?.title);
       
-      // Check if this is a microworkout ID (format: "variantId/microworkoutTitle")
-      console.log("CHECKPOINT 2: Splitting workoutId...");
+      // Check if this is a microworkout ID
       const parts = workoutId.split("/");
-      console.log("Parts:", parts, "Length:", parts.length);
-      console.log("Parts[0]:", parts[0]);
-      console.log("Parts[1]:", parts[1]);
-      
       let timeline: any[];
 
       if (parts.length === 2) {
         console.log("CHECKPOINT 3: Microworkout mode detected");
-        // Microworkout session
         const [variantId, microworkoutTitle] = parts;
-        console.log("Microworkout mode - variantId:", variantId, "title:", microworkoutTitle);
-        console.log("Getting variant for:", variantId);
         const variant = workoutActions.getWorkoutVariant(variantId);
-        console.log("Variant result:", variant);
-        console.log("Variant micro:", variant?.micro);
 
         if (!variant) {
-          console.error("CHECKPOINT 3.1: Workout variant not found for:", variantId);
-          const errorMsg = `Workout variant not found: ${variantId}`;
-          setInitError(errorMsg);
-          setIsLoading(false);
-          alert(errorMsg);
-          return;
+          throw new Error(`Workout variant not found: ${variantId}`);
         }
 
-        console.log("CHECKPOINT 3.2: Variant found, checking micro workouts...");
-        console.log("Variant micro workouts:", variant.micro.map(m => m.title));
         const microworkout = variant.micro.find(m => m.title === microworkoutTitle);
-        console.log("Found microworkout:", microworkout);
         
         if (!microworkout) {
-          console.error("CHECKPOINT 3.3: Microworkout not found");
-          console.error(`Microworkout "${microworkoutTitle}" not found in variant "${variantId}"`);
-          console.error("Available microworkouts:", variant.micro.map(m => m.title));
-          const errorMsg = `Microworkout "${microworkoutTitle}" not found. Available: ${variant.micro.map(m => m.title).join(", ")}`;
-          setInitError(errorMsg);
-          setIsLoading(false);
-          alert(errorMsg);
-          return;
+            throw new Error(`Microworkout "${microworkoutTitle}" not found.`);
         }
 
-        console.log("CHECKPOINT 4: Generating microworkout timeline...");
         timeline = WorkflowEngine.generateMicroworkoutTimeline(
           profile,
           variantId,
@@ -239,12 +107,9 @@ export default function GuidedSession() {
             progressionVariant: "standard",
           }
         );
-        console.log("CHECKPOINT 5: Timeline generated:", timeline.length, "steps");
       } else if (workoutId === "wrist_extension_training_system" || workoutId === "wrist-workout") {
-      console.log("CHECKPOINT 6.5: New YAML workout mode detected");
-         // Cast the imported yaml to our type
+         console.log("CHECKPOINT 6.5: New YAML workout mode detected");
          const yamlData = wristWorkout as unknown as YamlWorkout;
-         console.log("YAML Data:", yamlData);
          
          const generator = new YamlStepGenerator(yamlData, {
             globalRestTime: settingsStore.workout.defaultRestTime,
@@ -254,21 +119,14 @@ export default function GuidedSession() {
             progressionVariant: "standard",
          });
          timeline = generator.generateTimeline();
-         console.log("Timeline generated from YAML:", timeline);
       } else {
         console.log("CHECKPOINT 6: Full workout mode");
-        // Full workout variant session
         const variant = workoutActions.getWorkoutVariant(workoutId);
 
         if (!variant) {
-          console.error("CHECKPOINT 6.1: Workout variant not found");
-          const errorMsg = "Workout variant not found: " + workoutId;
-          setInitError(errorMsg);
-          setIsLoading(false);
-          return;
+           throw new Error("Workout variant not found: " + workoutId);
         }
 
-        console.log("CHECKPOINT 7: Generating full workout timeline...");
         timeline = WorkflowEngine.generateWorkoutTimeline(
           profile,
           workoutId,
@@ -284,25 +142,70 @@ export default function GuidedSession() {
 
     // Create session
     console.log("CHECKPOINT 8: Creating session...");
-    console.log("Creating session with:", { workoutId, profile: profile.meta.title, timelineLength: timeline.length });
     sessionActions.createSession(workoutId, profile.meta.title, timeline);
-    console.log("CHECKPOINT 9: Session created");
-
+    
     // Initialize engines
-    console.log("CHECKPOINT 10: Initializing engines...");
     voiceCoach = new VoiceCoach();
-    globalTimer = new IntervalTimer("countup");
-    console.log("CHECKPOINT 11: VoiceCoach and Timer initialized");
+    
+    if (sessionStore.currentSession) {
+        sessionEngine = new SessionEngine(sessionStore.currentSession);
+        
+        // Bind SessionEngine Events
+        sessionEngine.on("tick", (data: any) => {
+            if (data.elapsed !== undefined) {
+               // setElapsed(data.elapsed); // Wait, tick elapsed is Step elapsed or Global?
+               // In SessionEngine I implemented onTick(elapsed, remaining) for timer.
+               // It's step elapsed if using timer for step.
+               setStepElapsed(data.elapsed);
+            }
+            // Update Global Elapsed from Session Store (which Engine updates? Engine should update store)
+            // Or Engine should emit global elapsed.
+            setElapsed(Math.floor((Date.now() - sessionStore.currentSession!.startTime - (sessionStore.currentSession!.pausedTime || 0)) / 1000));
+            sessionActions.updateElapsedTime(elapsed());
+            
+            if (data.stepElapsed !== undefined) {
+                setStepElapsed(data.stepElapsed);
+            }
+            
+            if (data.tempo) {
+               setTempoPhase(data.tempo.phase);
+               setCurrentRep(data.tempo.rep);
+               setTempoProgress(data.tempo.progress);
+            }
+        });
+
+// in onStepChange
+        sessionEngine.on("stepChange", (_step: any) => {
+            // Force update signals if needed
+            setStepElapsed(0);
+        });
+
+        sessionEngine.on("statusChange", (status: any) => {
+             if (status === "paused") setShowPause(true);
+             if (status === "active") setShowPause(false);
+             if (status === "complete") {
+                 workoutActions.setLastCompleted(params.id || "", workoutActions.getCurrentProfile().meta.title);
+                 setShowSummary(true);
+             }
+        });
+
+        sessionEngine.on("cue", (cue: any) => {
+            if (settingsStore.audio.voiceVolume > 0) {
+               if (cue.type === 'tempo') {
+                   voiceCoach.announceTempo(cue.phase);
+               } else {
+                   voiceCoach.announce(cue);
+               }
+            }
+        });
+    }
 
     // Initialize WebGPU or WebGL (with fallback)
     console.log("CHECKPOINT 12: Initializing graphics...");
-    console.log("Canvas ref exists:", !!canvasRef);
     if (canvasRef) {
-      console.log("CHECKPOINT 13: Trying WebGPU...");
       // Try WebGPU first
       webgpuEngine = new WebGPUEngine();
       
-      // Add timeout to WebGPU init
       const timeoutMs = 3000;
       const timeoutPromise = new Promise<boolean>((_, reject) => {
         setTimeout(() => reject(new Error(`WebGPU init timed out after ${timeoutMs}ms`)), timeoutMs);
@@ -310,20 +213,15 @@ export default function GuidedSession() {
 
       let webgpuSuccess = false;
       try {
-        console.log("Starting WebGPU init race...");
-        // Assuming webgpuEngine.init returns Promise<boolean>
         webgpuSuccess = await Promise.race([
           webgpuEngine.init(canvasRef, intensityShader),
           timeoutPromise
         ]);
-        console.log("WebGPU init race finished, success:", webgpuSuccess);
       } catch (e) {
         console.warn("WebGPU init failed or timed out:", e);
         webgpuSuccess = false;
       }
       
-      console.log("CHECKPOINT 14: WebGPU final result:", webgpuSuccess);
-
       if (webgpuSuccess) {
         setRenderingSupported(true);
         webgpuEngine.startRenderLoop(() => ({
@@ -352,142 +250,38 @@ export default function GuidedSession() {
       }
     }
 
-    // Start session
-    sessionActions.startSession();
-    
-    // Announce first exercise
-    const firstStep = sessionGetters.getCurrentStep();
-    if (firstStep && firstStep.voiceCues.length > 0) {
-      voiceCoach.announce(firstStep.voiceCues[0]);
+    // Start session via Engine
+    if (sessionEngine) {
+        sessionEngine.start();
     }
-
-    // Start global timer
-    globalTimer.start((e) => {
-      setElapsed(e);
-      sessionActions.updateElapsedTime(e);
-    });
-
-    // Start step timer
-    console.log("Starting step timer...");
-    startStepTimer();
     
     // Mark as loaded
     setIsLoading(false);
     console.log("=== GuidedSession onMount COMPLETE ===");
     } catch (error) {
       console.error("!!! Error in GuidedSession onMount:", error);
-      console.error("Error stack:", error instanceof Error ? error.stack : "no stack");
       const errorMessage = error instanceof Error ? error.message : String(error);
       setInitError(errorMessage);
       setIsLoading(false);
-      alert("Failed to load workout: " + errorMessage);
-      // navigate("/library"); // Comment out to see error on page
-    } finally {
-      setIsLoading(false);
-    }
+    } 
   });
 
   onCleanup(() => {
-    globalTimer?.stop();
-    stepTimer?.stop();
-    if (tempoUpdateInterval !== null) {
-      clearInterval(tempoUpdateInterval);
-    }
-    tempoEngine?.stop();
+    sessionEngine?.stop();
     webgpuEngine?.destroy();
     webglEngine?.destroy();
     voiceCoach?.clearQueue();
   });
 
-  const handlePause = () => {
-    if (sessionGetters.isActive()) {
-      sessionActions.pauseSession();
-      globalTimer.pause();
-      stepTimer?.pause();
-      voiceCoach.pause();
-      setShowPause(true);
-    } else if (sessionGetters.isPaused()) {
-      handleResume();
-    }
-  };
-
-  const handleResume = () => {
-    sessionActions.resumeSession();
-    globalTimer.resume((e) => {
-      setElapsed(e);
-      sessionActions.updateElapsedTime(e);
-    });
-    
-    const currentStep = sessionGetters.getCurrentStep();
-    if (currentStep && currentStep.duration > 0 && !currentStep.tempo) {
-      stepTimer?.resume(
-        (e, _remaining) => {
-          setStepElapsed(e);
-          
-          // Re-check voice cues after resume
-          if (currentStep.voiceCues && settingsStore.audio.voiceVolume > 0) {
-            for (let i = 0; i < currentStep.voiceCues.length; i++) {
-              const cue = currentStep.voiceCues[i];
-              if (e >= cue.time && !triggeredCues.has(i)) {
-                triggeredCues.add(i);
-                voiceCoach.announce(cue);
-              }
-            }
-          }
-        },
-        () => {
-          handleNext();
-        }
-      );
-    }
-    
-    voiceCoach.resume();
-    setShowPause(false);
-  };
-
+  const handlePause = () => sessionEngine?.pause();
+  const handleResume = () => sessionEngine?.resume();
   const handleSkipFromPause = () => {
     setShowPause(false);
-    handleResume();
-    setTimeout(() => {
-      sessionActions.skipExercise();
-      startStepTimer();
-    }, 100);
+    sessionEngine?.resume();
+    setTimeout(() => sessionEngine?.skipExercise(), 100);
   };
-
-  const handleNext = () => {
-    sessionActions.nextStep();
-    
-    // Check if workout is complete (after advancing)
-    if (sessionGetters.isComplete()) {
-      sessionActions.completeSession();
-      workoutActions.setLastCompleted(params.id || "", workoutActions.getCurrentProfile().meta.title);
-      setShowSummary(true);
-      return;
-    }
-
-    // Announce new step
-    const step = sessionGetters.getCurrentStep();
-    if (step && step.voiceCues.length > 0) {
-      voiceCoach.announce(step.voiceCues[0]);
-    }
-
-    // Start new step timer
-    startStepTimer();
-  };
-
-  const handlePrevious = () => {
-    sessionActions.previousStep();
-    
-    // Announce step
-    const step = sessionGetters.getCurrentStep();
-    if (step && step.voiceCues.length > 0) {
-      voiceCoach.announce(step.voiceCues[0]);
-    }
-
-    // Restart step timer
-    startStepTimer();
-  };
-
+  const handleNext = () => sessionEngine?.next();
+  const handlePrevious = () => sessionEngine?.previous();
   const handleExit = () => {
     if (confirm("Are you sure you want to exit this workout?")) {
       sessionActions.endSession();
@@ -498,12 +292,6 @@ export default function GuidedSession() {
   const currentStep = () => sessionGetters.getCurrentStep();
   const nextStep = () => sessionGetters.getNextStep();
   const progress = () => sessionGetters.getProgress();
-
-  console.log("=== GuidedSession RENDERING JSX ===");
-  console.log("Current session exists:", !!sessionStore.currentSession);
-  console.log("Current step exists:", !!currentStep());
-  console.log("Is loading:", isLoading());
-  console.log("Init error:", initError());
 
   // Show loading state
   if (isLoading()) {
@@ -626,7 +414,7 @@ export default function GuidedSession() {
                   </Show>
 
                   {/* Tempo display for tempo-based exercises */}
-                  <Show when={step().tempo && tempoEngine}>
+                  <Show when={step().tempo && sessionEngine}>
                     <div class="text-center space-y-2">
                       <div class="text-sm text-gray-400">
                         Rep {currentRep()} of {step().exercise?.reps}
