@@ -62,6 +62,7 @@ export default function GuidedSession() {
   const [elapsed, setElapsed] = createSignal(0);
   const [stepElapsed, setStepElapsed] = createSignal(0);
   const [renderingSupported, setRenderingSupported] = createSignal(true);
+  const [hasStarted, setHasStarted] = createSignal(false);
   const [showSummary, setShowSummary] = createSignal(false);
   const [showPause, setShowPause] = createSignal(false);
   const [tempoProgress, setTempoProgress] = createSignal(0);
@@ -250,10 +251,8 @@ export default function GuidedSession() {
       }
     }
 
-    // Start session via Engine
-    if (sessionEngine) {
-        sessionEngine.start();
-    }
+    // Do NOT start session automatically. Wait for user interaction.
+    // sessionEngine.start(); removed.
     
     // Mark as loaded
     setIsLoading(false);
@@ -265,6 +264,18 @@ export default function GuidedSession() {
       setIsLoading(false);
     } 
   });
+
+  const handleStart = async () => {
+    // Resume/Unmute Audio Contexts
+    if (voiceCoach) {
+        await voiceCoach.resume(); // Ensure context is unlocked
+    }
+    
+    if (sessionEngine) {
+        sessionEngine.start();
+    }
+    setHasStarted(true);
+  };
 
   onCleanup(() => {
     sessionEngine?.stop();
@@ -320,6 +331,20 @@ export default function GuidedSession() {
         <Show when={isLoading()}>
           <div class="absolute inset-0 z-50 flex items-center justify-center bg-black text-white">
             <div class="text-2xl">Loading workout...</div>
+          </div>
+        </Show>
+
+        {/* Start Overlay - Required for Audio Autoplay Policy */}
+        <Show when={!isLoading() && !initError() && !hasStarted()}>
+          <div 
+             class="absolute inset-0 z-40 flex items-center justify-center bg-black/80 backdrop-blur-sm cursor-pointer"
+             onClick={handleStart}
+          >
+            <div class="text-center space-y-6 animate-pulse">
+              <div class="text-6xl">▶</div>
+              <div class="text-2xl font-bold uppercase tracking-widest">Tap to Start</div>
+              <div class="text-white/60">Enable audio and begin workout</div>
+            </div>
           </div>
         </Show>
 
