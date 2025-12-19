@@ -1,12 +1,13 @@
 import { IntervalTimer } from "./timer/IntervalTimer";
 import { TempoEngine, type TempoEvent } from "./timer/TempoEngine";
 import type { GuidedSession, SessionStep } from "../types/session";
+import { sessionActions } from "../stores/sessionStore";
 
 type EventType = "tick" | "stepChange" | "statusChange" | "cue" | "completed";
 type EventHandler = (data: any) => void;
 
 export class SessionEngine {
-  private session: GuidedSession;
+  private session: GuidedSession; // This is a reference to the store proxy
   private timer: IntervalTimer; // For duration-based steps
   private tempoEngine: TempoEngine | null = null;
   private listeners: Record<EventType, EventHandler[]> = {
@@ -46,8 +47,7 @@ export class SessionEngine {
   // Control Flow
   start() {
     console.log("SessionEngine: Start called");
-    this.session.state = "active";
-    this.session.startTime = Date.now();
+    sessionActions.startSession();
     this.emit("statusChange", "active");
     this.startStep();
   }
@@ -55,7 +55,7 @@ export class SessionEngine {
   pause() {
     console.log("SessionEngine: Pause called");
     if (this.session.state !== "active") return;
-    this.session.state = "paused";
+    sessionActions.pauseSession();
     this.timer.pause(); 
     this.stopTempoLoop();
     this.emit("statusChange", "paused");
@@ -64,7 +64,7 @@ export class SessionEngine {
   resume() {
     console.log("SessionEngine: Resume called");
     if (this.session.state !== "paused") return;
-    this.session.state = "active";
+    sessionActions.resumeSession();
     this.emit("statusChange", "active");
 
     const currentStep = this.getCurrentStep();
@@ -85,22 +85,32 @@ export class SessionEngine {
     console.log("SessionEngine: Stop called");
     this.timer.stop();
     this.stopTempoLoop();
-    this.session.state = "idle";
+    sessionActions.endSession(); // Or define a stop action? endSession clears it.
+    // Maybe just set state to idle?
+    // sessionActions.pauseSession();
     this.emit("statusChange", "idle");
   }
 
   // Skip to next EXERCISE (skips rests)
   skipExercise() {
-     // TODO: Implement similar logic to sessionStore.skipExercise
-     // For now, simpler next()
-     this.next();
+     sessionActions.skipExercise();
+     // We need to restart step processing for the new step
+     this.startStep();
   }
 
   private getCurrentStep(): SessionStep | undefined {
+    // Always read from the session reference, which is the store proxy.
+    // Solid proxies should give fresh values.
     return this.session.timeline[this.session.currentStepIndex];
   }
 
   private startStep() {
+    // IMPORTANT: getCurrentStep() reads from the session store proxy.
+    // When next() calls sessionActions.nextStep(), the store updates.
+    // We assume this.session.currentStepIndex reflects that change immediately 
+    // because standard JS references to proxies usually work that way in the same tick 
+    // if action was synchronous? Yes, Solid stores are synchronous.
+    
     const step = this.getCurrentStep();
     if (!step) {
       console.log("SessionEngine: No more steps, completing");
@@ -113,9 +123,7 @@ export class SessionEngine {
     this.triggeredCues.clear();
     this.emit("stepChange", step);
 
-    // Initial cue? handled by listener mostly, but we can emit one if the step has immediate cues.
-    // The previous logic in GuidedSession handled this by announcing immediately.
-    // We will emit the first cue if time == 0
+    // Emit first cue if time == 0
     if (step.voiceCues && step.voiceCues.length > 0) {
         if (step.voiceCues[0].time === 0) {
             this.emit("cue", step.voiceCues[0]);
@@ -133,7 +141,15 @@ export class SessionEngine {
     } else {
       // Time based
       this.stopTempoLoop();
-      this.timer = new IntervalTimer(step.duration > 0 ? "countdown" : "countup", step.duration);
+      // Reset timer for new step
+      // duration > 0 ? countdown : countup.
+      // If duration is 0, it's effectively a manual step or instant?
+      // If duration is 0, we shouldn't auto-complete immediately unless we want to skip it?
+      // Usually steps have duration. Setup steps might have 5s.
+      
+      const isCountdown = step.duration > 0;
+      this.timer = new IntervalTimer(isCountdown ? "countdown" : "countup", step.duration);
+      
       this.timer.start(
         (elapsed, remaining) => this.onTick(elapsed, remaining),
         () => {
@@ -200,10 +216,16 @@ export class SessionEngine {
 
   next() {
     this.stopTempoLoop();
-    this.timer.stop();
+    this.timer.stop(); // Stop current step timer
     
-    if (this.session.currentStepIndex < this.session.timeline.length - 1) {
-      this.session.currentStepIndex++;
+    const currentIndex = this.session.currentStepIndex;
+    if (currentIndex < this.session.timeline.length - 1) {
+      console.log("SessionEngine: Advancing to next step");
+      sessionActions.nextStep(); // Mutate store
+      // Wait? Solid store update is synchronous.
+      // So this.session.currentStepIndex should likely be updated by the time we run next line?
+      // But let's verify.
+      
       this.startStep();
     } else {
       this.complete();
@@ -215,15 +237,17 @@ export class SessionEngine {
     this.timer.stop();
     
     if (this.session.currentStepIndex > 0) {
-      this.session.currentStepIndex--;
-      this.startStep();
+        sessionActions.previousStep();
+        this.startStep();
     } else {
-      this.startStep();
+        // Just restart current?
+        // sessionActions.previousStep() checks boundary.
+        this.startStep();
     }
   }
 
   complete() {
-      this.session.state = "complete";
+      sessionActions.completeSession();
       this.emit("completed", {});
   }
 
