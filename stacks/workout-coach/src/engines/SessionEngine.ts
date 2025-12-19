@@ -147,9 +147,6 @@ export class SessionEngine {
       this.tempoEngine = new TempoEngine(step.repStructure, this.tempoTargetReps);
       this.tempoEngine.start();
       this.lastTempoRep = 1;
-      if (this.tempoTargetReps > 0) {
-        this.emit("cue", { type: "rep", rep: this.lastTempoRep, totalReps: this.tempoTargetReps });
-      }
       // Emit initial cue for the first phase
       const initialPhase = this.tempoEngine.getCurrentPhase();
       this.emit("cue", { type: "tempo", phase: initialPhase.type });
@@ -193,9 +190,11 @@ export class SessionEngine {
               const event = this.tempoEngine.update(dt, (e: TempoEvent) => {
                   if (e.rep !== this.lastTempoRep && e.rep <= this.tempoTargetReps) {
                       this.lastTempoRep = e.rep;
-                      this.emit("cue", { type: "rep", rep: e.rep, totalReps: this.tempoTargetReps });
                   }
                   this.emit("cue", { type: "tempo", phase: e.phase }); // Let voice coach handle formatting
+                  if ((e.phase === "concentric" || e.phase === "up") && e.rep <= this.tempoTargetReps) {
+                      this.emit("cue", { type: "rep", rep: e.rep, totalReps: this.tempoTargetReps, delayMs: 300 });
+                  }
                   
                   if (this.tempoEngine?.isComplete()) {
                       console.log("SessionEngine: Tempo complete");

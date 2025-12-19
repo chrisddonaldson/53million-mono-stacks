@@ -2,7 +2,7 @@ import { createSignal, onMount, onCleanup, Show } from "solid-js";
 import { useParams, useNavigate } from "@solidjs/router";
 import { sessionStore, sessionActions, sessionGetters } from "../stores/sessionStore";
 import { workoutActions } from "../stores/workoutStore";
-import { settingsStore } from "../stores/settingsStore";
+import { settingsActions, settingsStore } from "../stores/settingsStore";
 import { WorkflowEngine } from "../engines/workflow/WorkflowEngine";
 import { VoiceCoach } from "../engines/audio/VoiceCoach";
 import { WebGLEngine } from "../engines/webgl/WebGLEngine";
@@ -54,6 +54,7 @@ export default function GuidedSession() {
   // SessionEngine emits tick, we can use that.
 
   let voiceCoach: VoiceCoach;
+  let repAnnounceTimeout: number | null = null;
 
   const [elapsed, setElapsed] = createSignal(0);
   const [stepElapsed, setStepElapsed] = createSignal(0);
@@ -179,6 +180,7 @@ export default function GuidedSession() {
     
     // Initialize engines
     voiceCoach = new VoiceCoach();
+    voiceCoach.setMasterVolume(settingsStore.audio.masterVolume ?? 0.5);
     
     if (sessionStore.currentSession) {
         sessionEngine = new SessionEngine(sessionStore.currentSession);
@@ -227,7 +229,15 @@ export default function GuidedSession() {
                if (cue.type === "tempo") {
                    voiceCoach.announceTempo(cue.phase);
                } else if (cue.type === "rep") {
-                   voiceCoach.announceRep(cue.rep, cue.totalReps);
+                   if (repAnnounceTimeout) {
+                     clearTimeout(repAnnounceTimeout);
+                     repAnnounceTimeout = null;
+                   }
+                   const delayMs = typeof cue.delayMs === "number" ? cue.delayMs : 0;
+                   repAnnounceTimeout = window.setTimeout(() => {
+                     voiceCoach.announceRep(cue.rep, cue.totalReps);
+                     repAnnounceTimeout = null;
+                   }, delayMs);
                } else {
                    voiceCoach.announce(cue);
                }
@@ -290,10 +300,27 @@ export default function GuidedSession() {
     sessionEngine?.stop();
     webglEngine?.destroy();
     voiceCoach?.clearQueue();
+    if (repAnnounceTimeout) {
+      clearTimeout(repAnnounceTimeout);
+      repAnnounceTimeout = null;
+    }
   });
 
   const handlePause = () => sessionEngine?.pause();
   const handleResume = () => sessionEngine?.resume();
+  const handleMasterVolumeChange = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    const nextValue = Number.parseFloat(target.value);
+    const clamped = Math.max(0, Math.min(1, Number.isFinite(nextValue) ? nextValue : 0));
+    settingsActions.setAudioSettings({ masterVolume: clamped });
+    voiceCoach?.setMasterVolume(clamped);
+  };
+  const handleToggleMute = () => {
+    const current = settingsStore.audio.masterVolume ?? 0.5;
+    const nextValue = current > 0 ? 0 : 0.5;
+    settingsActions.setAudioSettings({ masterVolume: nextValue });
+    voiceCoach?.setMasterVolume(nextValue);
+  };
   const handleSkipFromPause = () => {
     setShowPause(false);
     sessionEngine?.resume();
@@ -508,6 +535,30 @@ export default function GuidedSession() {
             >
               ▶
             </Button>
+          </div>
+
+          {/* Volume control */}
+          <div class="mt-[clamp(0.4rem,3vw,0.8rem)] flex items-center gap-[clamp(0.4rem,3vw,0.8rem)] text-white">
+            <Button
+              size="lg"
+              variant="ghost"
+              class="rounded-full w-[clamp(2rem,10vw,2.6rem)] h-[clamp(2rem,10vw,2.6rem)] p-0 text-white text-[clamp(0.8rem,3.5vw,1.1rem)]"
+              onClick={handleToggleMute}
+            >
+              {settingsStore.audio.masterVolume > 0 ? "🔊" : "🔇"}
+            </Button>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={settingsStore.audio.masterVolume ?? 0.5}
+              onInput={handleMasterVolumeChange}
+              class="w-[clamp(6rem,30vw,12rem)] accent-primary"
+            />
+            <div class="text-[clamp(0.6rem,2.5vw,0.85rem)] w-[clamp(2rem,8vw,3rem)] text-right">
+              {Math.round((settingsStore.audio.masterVolume ?? 0.5) * 100)}%
+            </div>
           </div>
 
           {/* Step minimap */}
