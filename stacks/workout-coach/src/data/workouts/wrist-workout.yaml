@@ -1,0 +1,195 @@
+wrist_extension_training_system:
+  calculated_fields:
+    total_workout_time_seconds:
+      min: 1383
+      max: 1930
+    total_workout_time_hms:
+      min: "00:23:03"
+      max: "00:32:10"
+    total_workout_time_seconds_with_optional_exercises:
+      min: 1593
+      max: 2170
+    total_workout_time_hms_with_optional_exercises:
+      min: "00:26:33"
+      max: "00:36:10"
+
+  exercises:
+    - id: 1
+      name: Seated Dumbbell Wrist Extensions
+      equipment:
+        - Dumbbells
+      setup_seconds: 30
+      reset_between_sets_seconds: 45
+      sets: 3
+      reps:
+        min: 15
+        max: 20
+      tempo:
+        concentric_seconds: 2
+        top_pause_seconds: 1
+        eccentric_seconds: 4
+        bottom_pause_seconds: 0
+      calculated_fields:
+        time_per_rep_seconds: 7
+        set_duration_seconds:
+          min: 105
+          max: 140
+        total_exercise_time_seconds:
+          min: 360
+          max: 450
+      coaching_cues:
+        - Neural activation and isolation focus
+        - Forearms supported
+        - Lift only as high as extensors control
+      emphasis:
+        - Wrist extensors
+
+    - id: 2
+      name: Cable Wrist Extension
+      equipment:
+        - Low cable
+        - Handle
+      setup_seconds: 45
+      reset_between_sets_seconds: 60
+      sets: 3
+      reps:
+        min: 12
+        max: 15
+      tempo:
+        concentric_seconds: 3
+        top_pause_seconds: 1
+        eccentric_seconds: 3
+        bottom_pause_seconds: 0
+      calculated_fields:
+        time_per_rep_seconds: 7
+        set_duration_seconds:
+          min: 84
+          max: 105
+        total_exercise_time_seconds:
+          min: 357
+          max: 420
+      coaching_cues:
+        - Wrist control and elbow stability focus
+        - Smooth arc
+        - No finger extension cheating
+      emphasis:
+        - Deep extensors
+        - Tendon health
+
+    - id: 3
+      name: Controlled Wrist Deviations
+      equipment:
+        - Cable
+        - Dumbbell
+      setup_seconds: 30
+      reset_between_sets_seconds: 45
+      sets:
+        min: 2
+        max: 3
+      reps:
+        min: 12
+        max: 15
+      tempo:
+        concentric_seconds: 2
+        top_pause_seconds: 0
+        eccentric_seconds: 2
+        bottom_pause_seconds: 0
+      calculated_fields:
+        time_per_rep_seconds: 4
+        set_duration_seconds:
+          min: 48
+          max: 60
+        total_exercise_time_seconds:
+          min: 171
+          max: 315
+      coaching_cues:
+        - Wrist control and elbow stability focus
+        - Controlled deviation through full range
+      emphasis:
+        - Lateral wrist stabilizers
+
+    - id: 4
+      name: Reverse EZ-Bar Curls
+      equipment:
+        - EZ bar
+      setup_seconds: 45
+      reset_between_sets_seconds: 90
+      sets: 4
+      reps:
+        min: 6
+        max: 10
+      tempo:
+        concentric_seconds: 2
+        top_pause_seconds: 0
+        eccentric_seconds: 3
+        bottom_pause_seconds: 0
+      calculated_fields:
+        time_per_rep_seconds: 5
+        set_duration_seconds:
+          min: 30
+          max: 50
+        total_exercise_time_seconds:
+          min: 345
+          max: 485
+      coaching_cues:
+        - Mechanical tension emphasis
+        - Knuckles lead the movement
+        - Wrist locked in neutral
+      emphasis:
+        - Brachioradialis
+        - Wrist extensors
+
+    - id: 5
+      name: Bottom-Up Kettlebell Holds
+      optional: true
+      equipment:
+        - Kettlebell
+      setup_seconds: 30
+      reset_between_sets_seconds: 60
+      sets: 3
+      time_seconds:
+        min: 20
+        max: 30
+      calculated_fields:
+        total_exercise_time_seconds:
+          min: 210
+          max: 240
+      coaching_cues:
+        - Mechanical tension and stability focus
+        - Maintain vertical kettlebell alignment
+      emphasis:
+        - Wrist extensors
+        - Wrist stabilizers
+
+    - id: 6
+      name: High-Rep Wrist Extensions
+      equipment:
+        - Dumbbells
+      setup_seconds: 20
+      reset_between_sets_seconds: 30
+      sets:
+        min: 2
+        max: 3
+      reps:
+        min: 25
+        max: 30
+      tempo:
+        concentric_seconds: 1
+        top_pause_seconds: 0
+        eccentric_seconds: 1
+        bottom_pause_seconds: 0
+      calculated_fields:
+        time_per_rep_seconds: 2
+        set_duration_seconds:
+          min: 50
+          max: 60
+        total_exercise_time_seconds:
+          min: 150
+          max: 260
+      coaching_cues:
+        - Metabolic stress finisher
+        - Continuous tension, no rest at top or bottom
+      emphasis:
+        - Blood flow
+        - Recovery
+        - Hypertrophy

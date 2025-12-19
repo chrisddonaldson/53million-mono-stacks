@@ -19,6 +19,11 @@ import intensityShader from "../shaders/intensity.wgsl?raw";
 import vertexShader from "../shaders/intensity.vert.glsl?raw";
 import fragmentShader from "../shaders/intensity.frag.glsl?raw";
 
+import wristWorkout from "../data/workouts/wrist-workout.yaml";
+import { YamlStepGenerator } from "../engines/workflow/YamlStepGenerator";
+import TempoVisualizer from "../components/session/TempoVisualizer";
+import type { YamlWorkout } from "../types/yaml-workout";
+
 export default function GuidedSession() {
   console.log("=== GuidedSession COMPONENT RENDER ===");
   const params = useParams();
@@ -235,6 +240,18 @@ export default function GuidedSession() {
           }
         );
         console.log("CHECKPOINT 5: Timeline generated:", timeline.length, "steps");
+      } else if (workoutId === "wrist_extension_training_system" || workoutId === "wrist-workout") {
+         console.log("CHECKPOINT 6.5: New YAML workout mode detected");
+         // Cast the imported yaml to our type
+         const yamlData = wristWorkout as unknown as YamlWorkout;
+         const generator = new YamlStepGenerator(yamlData, {
+            globalRestTime: settingsStore.workout.defaultRestTime,
+            voiceEnabled: settingsStore.audio.voiceVolume > 0,
+            musicDucking: settingsStore.audio.musicDucking,
+            motivationalLevel: "medium",
+            progressionVariant: "standard",
+         });
+         timeline = generator.generateTimeline();
       } else {
         console.log("CHECKPOINT 6: Full workout mode");
         // Full workout variant session
@@ -526,6 +543,19 @@ export default function GuidedSession() {
           height={window.innerHeight}
           class="absolute inset-0"
         />
+      </Show>
+
+      {/* Tempo Visualizer Overlay */}
+      <Show when={currentStep()?.repStructure}>
+        <div class="absolute inset-0 flex items-center justify-center p-8 pointer-events-none z-10">
+            <div class="w-full max-w-md pointer-events-auto">
+                <TempoVisualizer 
+                    repStructure={currentStep()!.repStructure}
+                    elapsedTime={stepElapsed()}
+                    duration={currentStep()!.duration}
+                />
+            </div>
+        </div>
       </Show>
 
       {/* HUD Overlay */}

@@ -20,6 +20,11 @@ export interface VoiceCue {
 
 export type StepType = "setup" | "warmup" | "work" | "rest" | "transition" | "summary";
 
+export interface StepPhase {
+  type: 'concentric' | 'eccentric' | 'hold' | 'rest';
+  duration: number; // Duration of this specific phase
+}
+
 export interface SessionStep {
   type: StepType;
   exercise?: Exercise;
@@ -31,6 +36,8 @@ export interface SessionStep {
   setNumber?: number;
   totalSets?: number;
   load?: string; // Calculated weight or "bodyweight"
+  repStructure?: StepPhase[]; // Detailed timing for "Guitar Hero" visualization
+  totalReps?: number;
 }
 
 export interface SessionSettings {

@@ -2,6 +2,8 @@ import { createStore } from "solid-js/store";
 import { WORKOUT_PROFILES, DEFAULT_WORKOUT_PROFILE_ID } from "../data/workouts/profiles";
 import { FULL_WORKOUT_ARRAY } from "../data/workouts/full-workout-array";
 import type { Config, WorkoutVariant, MajorLift, MicroWorkout } from "../types/config";
+import wristWorkout from "../data/workouts/wrist-workout.yaml";
+import type { YamlWorkout } from "../types/yaml-workout";
 
 interface WorkoutStoreState {
   profiles: Record<string, Config>;
@@ -103,23 +105,34 @@ export const workoutActions = {
     return variants;
   },
 
+
   getAllMicroworkouts(): Array<{ id: string; microworkout: { title: string; items: any[] }; parentVariant: string; profile: string }> {
+    // New logic: Only return YAML workouts (specifically wrist workout for now)
     const microworkouts: Array<{ id: string; microworkout: { title: string; items: any[] }; parentVariant: string; profile: string }> = [];
     
-    FULL_WORKOUT_ARRAY.forEach(section => {
-      if (section.sectionType === "micro") {
-        const profile = this._getProfileForWorkout(section.workout);
-        microworkouts.push({
-          id: `${section.workout}/${section.title}`,
-          microworkout: {
-            title: section.title,
-            items: section.items,
-          },
-          parentVariant: section.workout,
-          profile,
-        });
-      }
-    });
+    // Process wrist workout
+    const workoutData = wristWorkout as unknown as YamlWorkout;
+    const rootKey = Object.keys(workoutData)[0];
+    const data = workoutData[rootKey];
+    
+    if (data && data.exercises) {
+      const items = data.exercises.map(ex => ({
+        name: ex.name,
+        sets: typeof ex.sets === 'number' ? ex.sets : ex.sets.max,
+        reps: typeof ex.reps === 'number' ? ex.reps : (ex.reps as any)?.max || 0,
+        load: "moderate"
+      }));
+
+      microworkouts.push({
+        id: "wrist-workout",
+        microworkout: {
+          title: "Wrist Extension System",
+          items: items,
+        },
+        parentVariant: "Wrist Health",
+        profile: "chris",
+      });
+    }
 
     return microworkouts;
   },
