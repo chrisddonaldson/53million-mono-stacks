@@ -69,7 +69,7 @@ export class SessionEngine {
 
     const currentStep = this.getCurrentStep();
     if (currentStep) {
-        if (currentStep.type === "work" && currentStep.tempo && currentStep.exercise) {
+        if (currentStep.type === "work" && currentStep.repStructure && currentStep.repStructure.length > 0 && currentStep.exercise) {
             this.startTempoLoop();
         } else {
             console.log("SessionEngine: Resuming timer");
@@ -131,10 +131,10 @@ export class SessionEngine {
         }
     }
 
-    if (step.type === "work" && step.tempo && step.exercise) {
+    if (step.type === "work" && step.repStructure && step.repStructure.length > 0 && step.exercise) {
       // Tempo based
       this.timer.stop(); 
-      this.tempoEngine = new TempoEngine(step.tempo, step.exercise.reps);
+      this.tempoEngine = new TempoEngine(step.repStructure, step.exercise.reps);
       this.tempoEngine.start();
       this.startTempoLoop();
 

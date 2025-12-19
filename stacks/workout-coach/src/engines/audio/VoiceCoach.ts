@@ -1,6 +1,6 @@
 import { TTSEngine, type TTSOptions } from "./TTSEngine";
 import type { VoiceCue } from "../../types/session";
-import type { TempoPhase } from "../timer/TempoEngine";
+
 
 export class VoiceCoach {
   private tts: TTSEngine;
@@ -43,19 +43,30 @@ export class VoiceCoach {
     this.isSpeaking = false;
   }
 
-  async announceTempo(phase: TempoPhase): Promise<void> {
+  async announceTempo(phase: string): Promise<void> {
     if (!this.isEnabled) return;
 
-    const options: Record<TempoPhase, TTSOptions> = {
-      down: { rate: 0.8, pitch: 0.9, volume: 0.8 },   // Slower, lower
-      hold: { rate: 0.7, pitch: 1.0, volume: 0.7 },   // Very slow
-      up: { rate: 1.2, pitch: 1.1, volume: 0.8 },     // Faster, higher
+    const options: Record<string, TTSOptions> = {
+      eccentric: { rate: 0.8, pitch: 0.9, volume: 0.8 },   // Down: Slower, lower
+      concentric: { rate: 1.2, pitch: 1.1, volume: 0.8 },  // Up: Faster, higher
+      hold: { rate: 0.8, pitch: 1.0, volume: 0.7 },        // Hold
+      rest: { rate: 1.0, pitch: 1.0, volume: 0.7 },
     };
 
+    const textMap: Record<string, string> = {
+        eccentric: "Down",
+        concentric: "Up",
+        hold: "Hold",
+        rest: "Rest"
+    };
+
+    const text = textMap[phase] || phase;
+    const opts = options[phase] || { rate: 1.0 };
+
     await this.announce({
-      text: phase,
+      text,
       time: 0,
-      options: options[phase],
+      options: opts,
     });
   }
 

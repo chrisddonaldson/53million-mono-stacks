@@ -1,6 +1,6 @@
 import type { Config, WorkoutVariant, Exercise, MajorLift } from "../../types/config";
-import type { SessionStep, SessionSettings, Tempo } from "../../types/session";
-import { TempoEngine } from "../timer/TempoEngine";
+import type { SessionStep, SessionSettings, Tempo, StepPhase } from "../../types/session";
+
 
 export class StepGenerator {
   private config: Config;
@@ -145,10 +145,50 @@ export class StepGenerator {
     // Parse tempo if available
     let tempo: Tempo | undefined;
     let duration = 60; // Default duration
+    let repStructure: StepPhase[] | undefined;
     
     if ("tempo" in exercise && exercise.tempo) {
-      tempo = TempoEngine.parseTempo(exercise.tempo);
+      const parts = exercise.tempo.split("-").map(Number);
+      tempo = {
+        down: parts[0] || 2,
+        hold: parts[1] || 0,
+        up: parts[2] || 1,
+      };
       duration = (tempo.down + tempo.hold + tempo.up) * reps + 10; // +10s for setup
+      
+      // Auto-generate repStructure for compatibility with new TempoEngine
+      // Assuming standard Down -> Hold -> Up ? Or 3-1-1 usually means Down-Hold-Up.
+      // But we just implemented Down/Hold/Up mapping in VoiceCoach.
+      // Let's generate a basic rep structure.
+      // 3-phases: Eccentric (Down), Hold, Concentric (Up)
+      // Wait, 3-1-1 is Down 3, Hold 1, Up 1.
+      // If we want "Up, Hold, Down, Hold" as requested for YAML, that's specific to YAML.
+      // Old workouts can use 3-phase.
+      // TempoEngine supports arbitrary phases now!
+      
+      /* 
+         Standard tempo "3-0-1" usually means:
+         Eccentric (Down) 3s
+         Bottom Pause 0s
+         Concentric (Up) 1s
+         (Top pause implicit or 4th digit)
+      */
+      
+      repStructure = [];
+      const repPhases: any[] = []; // StepPhase[]
+      
+      // Eccentric
+      if (tempo.down > 0) repPhases.push({ type: "eccentric", duration: tempo.down });
+      // Hold (Bottom)
+      if (tempo.hold > 0) repPhases.push({ type: "hold", duration: tempo.hold });
+      // Concentric
+      if (tempo.up > 0) repPhases.push({ type: "concentric", duration: tempo.up });
+      
+      // Repeat for all reps? 
+      // TempoEngine iterates phases. If we want it to count reps, we need a SINGLE rep structure.
+      // TempoEngine takes repStructure and loops it `reps` times.
+      
+      repStructure = repPhases;
     }
 
     // Determine intensity based on load and exercise type
@@ -181,6 +221,7 @@ export class StepGenerator {
       setNumber,
       totalSets,
       load,
+      repStructure,
     };
   }
 

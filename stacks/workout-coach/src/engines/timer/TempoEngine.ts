@@ -1,31 +1,30 @@
-import type { Tempo } from "../../types/session";
-
-export type TempoPhase = "down" | "hold" | "up";
+import type { StepPhase } from "../../types/session";
 
 export interface TempoEvent {
-  phase: TempoPhase;
+  phase: StepPhase["type"];
   rep: number;
   progress: number; // 0-1 within current phase
 }
 
 export class TempoEngine {
-  private tempo: Tempo;
-  private currentPhase: TempoPhase = "down";
+  private phases: StepPhase[];
+  private currentPhaseIndex: number = 0;
   private phaseStartTime: number = 0;
   private currentRep: number = 1;
   private targetReps: number;
   private isActive: boolean = false;
   private elapsed: number = 0;
 
-  constructor(tempo: Tempo, targetReps: number) {
-    this.tempo = tempo;
+  constructor(phases: StepPhase[], targetReps: number) {
+    // Ensure we have at least one phase
+    this.phases = phases.length > 0 ? phases : [{ type: "concentric", duration: 1 }];
     this.targetReps = targetReps;
   }
 
   start(): void {
     this.isActive = true;
     this.phaseStartTime = performance.now();
-    this.currentPhase = "down";
+    this.currentPhaseIndex = 0;
     this.currentRep = 1;
     this.elapsed = 0;
   }
@@ -33,7 +32,7 @@ export class TempoEngine {
   update(deltaTime: number, onPhaseChange?: (event: TempoEvent) => void): TempoEvent {
     if (!this.isActive) {
       return {
-        phase: this.currentPhase,
+        phase: this.getCurrentPhase().type,
         rep: this.currentRep,
         progress: 0,
       };
@@ -41,21 +40,19 @@ export class TempoEngine {
 
     this.elapsed += deltaTime;
 
-    // Get duration of current phase
-    const phaseDuration = this.getPhaseDuration(this.currentPhase);
+    const currentPhase = this.getCurrentPhase();
+    const phaseDuration = currentPhase.duration;
     const phaseElapsed = (performance.now() - this.phaseStartTime) / 1000;
-    const progress = Math.min(1, phaseElapsed / phaseDuration);
+    const progress = phaseDuration > 0 ? Math.min(1, phaseElapsed / phaseDuration) : 1;
 
     // Check if phase is complete
     if (phaseElapsed >= phaseDuration) {
-      const nextPhase = this.getNextPhase();
-      const wasUp = this.currentPhase === "up";
-      
-      this.currentPhase = nextPhase;
-      this.phaseStartTime = performance.now();
+      // Advance to next phase
+      this.currentPhaseIndex = (this.currentPhaseIndex + 1) % this.phases.length;
+      this.phaseStartTime = performance.now(); // Reset time for new phase
 
-      // If we just completed "up" phase, increment rep
-      if (wasUp) {
+      // If we wrapped around to the first phase, we completed a rep
+      if (this.currentPhaseIndex === 0) {
         this.currentRep++;
         
         // Check if all reps completed
@@ -64,41 +61,26 @@ export class TempoEngine {
         }
       }
 
-      // Trigger callback
-      onPhaseChange?.({
-        phase: this.currentPhase,
-        rep: this.currentRep,
-        progress: 0,
-      });
+      // Trigger callback ONLY if we changed phases (and not stopped)
+      // Actually we always trigger on phase change
+      if (this.isActive || this.currentRep > this.targetReps) {
+          onPhaseChange?.({
+            phase: this.getCurrentPhase().type,
+            rep: this.currentRep,
+            progress: 0,
+          });
+      }
     }
 
     return {
-      phase: this.currentPhase,
+      phase: this.getCurrentPhase().type,
       rep: this.currentRep,
       progress,
     };
   }
 
-  private getPhaseDuration(phase: TempoPhase): number {
-    switch (phase) {
-      case "down":
-        return this.tempo.down;
-      case "hold":
-        return this.tempo.hold;
-      case "up":
-        return this.tempo.up;
-    }
-  }
-
-  private getNextPhase(): TempoPhase {
-    switch (this.currentPhase) {
-      case "down":
-        return "hold";
-      case "hold":
-        return "up";
-      case "up":
-        return "down";
-    }
+  private getCurrentPhase(): StepPhase {
+    return this.phases[this.currentPhaseIndex];
   }
 
   stop(): void {
@@ -106,7 +88,7 @@ export class TempoEngine {
   }
 
   reset(): void {
-    this.currentPhase = "down";
+    this.currentPhaseIndex = 0;
     this.phaseStartTime = 0;
     this.currentRep = 1;
     this.isActive = false;
@@ -114,9 +96,10 @@ export class TempoEngine {
   }
 
   getProgress(): number {
-    const phaseDuration = this.getPhaseDuration(this.currentPhase);
+    const currentPhase = this.getCurrentPhase();
+    const phaseDuration = currentPhase.duration;
     const phaseElapsed = (performance.now() - this.phaseStartTime) / 1000;
-    return Math.min(1, phaseElapsed / phaseDuration);
+    return phaseDuration > 0 ? Math.min(1, phaseElapsed / phaseDuration) : 1;
   }
 
   getCurrentRep(): number {
@@ -129,15 +112,5 @@ export class TempoEngine {
 
   getElapsed(): number {
     return this.elapsed;
-  }
-
-  // Parse tempo string like "3-1-1" into Tempo object
-  static parseTempo(tempoString: string): Tempo {
-    const parts = tempoString.split("-").map(Number);
-    return {
-      down: parts[0] || 2,
-      hold: parts[1] || 0,
-      up: parts[2] || 1,
-    };
   }
 }

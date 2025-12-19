@@ -66,7 +66,7 @@ export default function GuidedSession() {
   const [showPause, setShowPause] = createSignal(false);
   const [tempoProgress, setTempoProgress] = createSignal(0);
   const [currentRep, setCurrentRep] = createSignal(0);
-  const [tempoPhase, setTempoPhase] = createSignal<"down" | "hold" | "up">("down");
+  const [tempoPhase, setTempoPhase] = createSignal<string>("down");
 
   onMount(async () => {
     try {
@@ -418,13 +418,13 @@ export default function GuidedSession() {
                         Rep {currentRep()} of {step().exercise?.reps}
                       </div>
                       <div class="flex justify-center gap-2 text-xs">
-                        <span class={tempoPhase() === "down" ? "text-primary font-bold" : "text-gray-500"}>
+                        <span class={tempoPhase() === "eccentric" || tempoPhase() === "down" ? "text-primary font-bold" : "text-gray-500"}>
                           DOWN
                         </span>
                         <span class={tempoPhase() === "hold" ? "text-primary font-bold" : "text-gray-500"}>
                           HOLD
                         </span>
-                        <span class={tempoPhase() === "up" ? "text-primary font-bold" : "text-gray-500"}>
+                        <span class={tempoPhase() === "concentric" || tempoPhase() === "up" ? "text-primary font-bold" : "text-gray-500"}>
                           UP
                         </span>
                       </div>
