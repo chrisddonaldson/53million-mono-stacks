@@ -307,14 +307,14 @@ export default function GuidedSession() {
 
         {/* Start Overlay - Required for Audio Autoplay Policy */}
         <Show when={!isLoading() && !initError() && !hasStarted()}>
-          <div 
-             class="absolute inset-0 z-40 flex items-center justify-center bg-black/80 backdrop-blur-sm cursor-pointer"
-             onClick={handleStart}
+          <div
+            class="absolute inset-0 z-40 flex items-center justify-center bg-black/80 backdrop-blur-sm cursor-pointer"
+            onClick={handleStart}
           >
-            <div class="text-center space-y-6 animate-pulse">
-              <div class="text-6xl">▶</div>
-              <div class="text-2xl font-bold uppercase tracking-widest">Tap to Start</div>
-              <div class="text-white/60">Enable audio and begin workout</div>
+            <div class="text-center space-y-4 animate-pulse px-4">
+              <div class="text-[clamp(2.25rem,10vw,3.75rem)]">▶</div>
+              <div class="text-[clamp(1rem,4.5vw,1.5rem)] font-bold uppercase tracking-widest">Tap to Start</div>
+              <div class="text-[clamp(0.7rem,3vw,1rem)] text-white/60">Enable audio and begin workout</div>
             </div>
           </div>
         </Show>
@@ -353,8 +353,8 @@ export default function GuidedSession() {
 
       {/* Tempo Visualizer Overlay */}
       <Show when={currentStep()?.repStructure}>
-        <div class="absolute inset-0 flex items-center justify-center p-8 pointer-events-none z-10">
-            <div class="w-full max-w-md pointer-events-auto">
+        <div class="absolute inset-0 flex items-center justify-center p-[clamp(0.5rem,4vw,2rem)] pointer-events-none z-10">
+            <div class="w-full max-w-[min(90vw,26rem)] pointer-events-auto">
                 <TempoVisualizer 
                     repStructure={currentStep()!.repStructure}
                     elapsedTime={stepElapsed()}
@@ -367,26 +367,26 @@ export default function GuidedSession() {
       {/* HUD Overlay */}
       <div class="absolute inset-0 pointer-events-none">
         {/* Page Label */}
-        <div class="absolute top-4 left-4 text-xs text-white/60 pointer-events-none">
+        <div class="absolute top-2 left-2 text-[clamp(0.55rem,2vw,0.75rem)] text-white/60 pointer-events-none">
           System Menu / Guided Session
         </div>
         {/* Top Bar */}
-        <div class="p-4 flex justify-between text-white text-sm pointer-events-auto">
-          <div>Elapsed: {formatTime(elapsed())}</div>
-          <div>
+        <div class="pt-2 px-2 sm:pt-4 sm:px-4 flex flex-wrap justify-between gap-x-4 gap-y-1 text-white text-[clamp(0.65rem,2.4vw,0.9rem)] pointer-events-auto">
+          <div class="shrink-0">Elapsed: {formatTime(elapsed())}</div>
+          <div class="shrink-0">
             <Show when={currentStep()?.duration && currentStep()!.duration > 0}>
               <div>Step: {formatTime(stepElapsed())} / {formatTime(currentStep()!.duration)}</div>
             </Show>
           </div>
-          <div>Remaining: {formatTime(sessionGetters.getRemainingTime())}</div>
+          <div class="shrink-0">Remaining: {formatTime(sessionGetters.getRemainingTime())}</div>
         </div>
 
         {/* Center HUD */}
-        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
-          <div class="bg-black/60 backdrop-blur-sm rounded-lg p-6 min-w-[400px] text-white">
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-auto px-2">
+          <div class="bg-black/60 backdrop-blur-sm rounded-lg p-[clamp(0.75rem,3.5vw,1.5rem)] w-[min(92vw,28rem)] max-h-[60vh] overflow-y-auto text-white">
             <Show when={currentStep()} fallback={
               <div class="text-center">
-                <div class="text-xl text-red-500">No current step available</div>
+                <div class="text-[clamp(0.9rem,4vw,1.25rem)] text-red-500">No current step available</div>
                 <div class="text-sm mt-2">Session: {sessionStore.currentSession ? "exists" : "null"}</div>
                 <div class="text-sm">Timeline length: {sessionStore.currentSession?.timeline.length || 0}</div>
               </div>
@@ -394,27 +394,27 @@ export default function GuidedSession() {
               {(step) => (
                 <div class="space-y-4">
                   <div class="text-center">
-                    <div class="text-sm text-gray-400 uppercase">{step().type}</div>
-                    <div class="text-2xl font-bold mt-2">{step().exerciseName || "Ready"}</div>
+                    <div class="text-[clamp(0.65rem,2.5vw,0.9rem)] text-gray-400 uppercase">{step().type}</div>
+                    <div class="text-[clamp(1.1rem,5vw,1.7rem)] font-bold mt-2">{step().exerciseName || "Ready"}</div>
                   </div>
 
                   <Show when={step().setNumber}>
-                    <div class="text-center text-sm">
+                    <div class="text-center text-[clamp(0.65rem,2.4vw,0.9rem)]">
                       Set {step().setNumber} of {step().totalSets}
                     </div>
                   </Show>
 
                   <Show when={step().load}>
-                    <div class="text-center text-lg">{step().load}</div>
+                    <div class="text-center text-[clamp(0.9rem,3.2vw,1.1rem)]">{step().load}</div>
                   </Show>
 
                   {/* Tempo display for tempo-based exercises */}
                   <Show when={(step().tempo || step().repStructure) && sessionEngine}>
                     <div class="text-center space-y-2">
-                      <div class="text-sm text-gray-400">
+                      <div class="text-[clamp(0.65rem,2.4vw,0.9rem)] text-gray-400">
                         Rep {currentRep()} of {step().exercise?.reps}
                       </div>
-                      <div class="flex justify-center gap-2 text-xs">
+                      <div class="flex justify-center gap-[clamp(0.25rem,2.5vw,0.5rem)] text-[clamp(0.6rem,2.2vw,0.8rem)]">
                         <span class={tempoPhase() === "eccentric" || tempoPhase() === "down" ? "text-primary font-bold" : "text-gray-500"}>
                           DOWN
                         </span>
@@ -444,7 +444,7 @@ export default function GuidedSession() {
 
                   <Show when={nextStep()}>
                     {(next) => (
-                      <div class="text-center text-sm text-gray-400">
+                      <div class="text-center text-[clamp(0.65rem,2.4vw,0.9rem)] text-gray-400">
                         Next: {next().exerciseName || next().type}
                       </div>
                     )}
@@ -456,12 +456,12 @@ export default function GuidedSession() {
         </div>
 
         {/* Bottom Toolbar */}
-        <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 pointer-events-auto">
-          <div class="flex gap-4 bg-black/60 backdrop-blur-sm rounded-full p-4">
+        <div class="absolute bottom-2 left-0 right-0 flex justify-center pointer-events-auto px-2 sm:bottom-6">
+          <div class="flex gap-[clamp(0.5rem,3vw,1rem)] bg-black/60 backdrop-blur-sm rounded-full px-[clamp(0.6rem,4vw,1.5rem)] py-[clamp(0.4rem,3vw,0.9rem)]">
             <Button
               size="lg"
               variant="ghost"
-              class="rounded-full w-12 h-12 p-0 text-white"
+              class="rounded-full w-[clamp(2.25rem,12vw,3rem)] h-[clamp(2.25rem,12vw,3rem)] p-0 text-white text-[clamp(0.9rem,4vw,1.2rem)]"
               onClick={handlePrevious}
             >
               ◀
@@ -470,7 +470,7 @@ export default function GuidedSession() {
             <Button
               size="lg"
               variant="ghost"
-              class="rounded-full w-16 h-16 p-0 text-2xl text-white"
+              class="rounded-full w-[clamp(2.75rem,16vw,4rem)] h-[clamp(2.75rem,16vw,4rem)] p-0 text-[clamp(1.1rem,6vw,1.7rem)] text-white"
               onClick={handlePause}
             >
               {sessionGetters.isActive() ? "⏸" : "▶"}
@@ -479,7 +479,7 @@ export default function GuidedSession() {
             <Button
               size="lg"
               variant="ghost"
-              class="rounded-full w-12 h-12 p-0 text-white"
+              class="rounded-full w-[clamp(2.25rem,12vw,3rem)] h-[clamp(2.25rem,12vw,3rem)] p-0 text-white text-[clamp(0.9rem,4vw,1.2rem)]"
               onClick={handleNext}
             >
               ▶
@@ -487,13 +487,13 @@ export default function GuidedSession() {
           </div>
 
           {/* Step minimap */}
-          <div class="flex justify-center gap-1 mt-4">
+          <div class="flex justify-center gap-[clamp(0.2rem,2vw,0.35rem)] mt-[clamp(0.4rem,3vw,0.8rem)]">
             <Show when={sessionStore.currentSession}>
               {(session) => (
                 <>
                   {session().timeline.map((_, index) => (
                     <div
-                      class={`w-2 h-2 rounded-full ${
+                      class={`w-[clamp(0.25rem,2.2vw,0.5rem)] h-[clamp(0.25rem,2.2vw,0.5rem)] rounded-full ${
                         index === session().currentStepIndex
                           ? "bg-primary"
                           : index < session().currentStepIndex
@@ -511,7 +511,7 @@ export default function GuidedSession() {
         {/* Exit button */}
         <Button
           variant="ghost"
-          class="absolute top-4 right-4 text-white pointer-events-auto"
+          class="absolute top-2 right-2 text-white pointer-events-auto text-[clamp(0.65rem,2.5vw,0.85rem)] px-2 py-1"
           onClick={handleExit}
         >
           Exit
