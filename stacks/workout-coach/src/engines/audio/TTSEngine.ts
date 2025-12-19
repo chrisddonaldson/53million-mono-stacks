@@ -22,6 +22,8 @@ export class TTSEngine {
     this.synth = window.speechSynthesis;
   }
 
+  private activeUtterance: SpeechSynthesisUtterance | null = null; // Prevent GC
+
   init(): void {
     // Load voices (may be async in some browsers)
     const loadVoices = () => {
@@ -55,10 +57,12 @@ export class TTSEngine {
         return;
       }
 
-      // Cancel any ongoing speech
+      // Cancel any ongoing speech - wait, this might break queueing if we call speak in parallel?
+      // VoiceCoach manages the queue, so speak() is called sequentially.
       this.synth.cancel();
 
       const utterance = new SpeechSynthesisUtterance(text);
+      this.activeUtterance = utterance; // Keep ref
       
       if (this.voice) {
         utterance.voice = this.voice;
@@ -69,9 +73,13 @@ export class TTSEngine {
       utterance.volume = options?.volume ?? this.defaultOptions.volume;
       utterance.lang = options?.lang ?? this.defaultOptions.lang;
 
-      utterance.onend = () => resolve();
+      utterance.onend = () => {
+          this.activeUtterance = null;
+          resolve();
+      };
       utterance.onerror = (event) => {
         console.error("TTS error:", event);
+        this.activeUtterance = null;
         reject(event);
       };
 
@@ -80,6 +88,11 @@ export class TTSEngine {
   }
 
   cancel(): void {
+    if (this.activeUtterance) {
+      this.activeUtterance.onend = null;
+      this.activeUtterance.onerror = null;
+      this.activeUtterance = null;
+    }
     this.synth?.cancel();
   }
 

@@ -38,7 +38,7 @@ export class VoiceCoach {
       }
 
       // Small delay between cues
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 50));
     }
     this.isSpeaking = false;
   }
