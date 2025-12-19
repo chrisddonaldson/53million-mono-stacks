@@ -1,4 +1,4 @@
-import type { RenderUniforms } from "../../types/webgpu";
+import type { RenderUniforms } from "../../types/rendering";
 
 export class WebGLEngine {
   private gl: WebGLRenderingContext | null = null;

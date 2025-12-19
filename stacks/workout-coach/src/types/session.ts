@@ -32,7 +32,7 @@ export interface SessionStep {
   duration: number; // In seconds (0 = indefinite)
   tempo?: Tempo;
   voiceCues: VoiceCue[];
-  visualIntensity: number; // 0-1 for WebGPU rendering
+  visualIntensity: number; // 0-1 for rendering
   setNumber?: number;
   totalSets?: number;
   load?: string; // Calculated weight or "bodyweight"

@@ -1,11 +1,10 @@
-import { createSignal, onMount, onCleanup, Show, createEffect } from "solid-js";
+import { createSignal, onMount, onCleanup, Show } from "solid-js";
 import { useParams, useNavigate } from "@solidjs/router";
 import { sessionStore, sessionActions, sessionGetters } from "../stores/sessionStore";
 import { workoutActions } from "../stores/workoutStore";
 import { settingsStore } from "../stores/settingsStore";
 import { WorkflowEngine } from "../engines/workflow/WorkflowEngine";
 import { VoiceCoach } from "../engines/audio/VoiceCoach";
-import { WebGPUEngine } from "../engines/webgpu/WebGPUEngine";
 import { WebGLEngine } from "../engines/webgl/WebGLEngine";
 import { Button } from "../components/ui/Button";
 import { formatTime } from "../lib/utils";
@@ -13,7 +12,6 @@ import SummaryModal from "../components/modals/SummaryModal";
 import PauseModal from "../components/modals/PauseModal";
 
 // Import shader code
-import intensityShader from "../shaders/intensity.wgsl?raw";
 import vertexShader from "../shaders/intensity.vert.glsl?raw";
 import fragmentShader from "../shaders/intensity.frag.glsl?raw";
 
@@ -31,7 +29,6 @@ export default function GuidedSession() {
   const [initError, setInitError] = createSignal<string | null>(null);
   const [isLoading, setIsLoading] = createSignal(true);
   
-  let webgpuCanvasRef: HTMLCanvasElement | undefined;
   let webglCanvasRef: HTMLCanvasElement | undefined;
   
   // Early return test to ensure component renders
@@ -47,7 +44,6 @@ export default function GuidedSession() {
     );
   }
 
-  let webgpuEngine: WebGPUEngine | null = null;
   let webglEngine: WebGLEngine | null = null;
   
   // New Engine
@@ -63,46 +59,12 @@ export default function GuidedSession() {
   const [elapsed, setElapsed] = createSignal(0);
   const [stepElapsed, setStepElapsed] = createSignal(0);
   const [renderingSupported, setRenderingSupported] = createSignal(true);
-  const [fallbackToWebGL, setFallbackToWebGL] = createSignal(false);
   const [hasStarted, setHasStarted] = createSignal(false);
   const [showSummary, setShowSummary] = createSignal(false);
   const [showPause, setShowPause] = createSignal(false);
   const [tempoProgress, setTempoProgress] = createSignal(0);
   const [currentRep, setCurrentRep] = createSignal(0);
   const [tempoPhase, setTempoPhase] = createSignal<string>("down");
-
-  createEffect(() => {
-    if (fallbackToWebGL()) {
-      console.log("Fallback signal active, initializing WebGL...");
-      
-      // Ensure canvas is ready (ref updated)
-      if (!webglCanvasRef) {
-        console.error("Canvas ref missing in fallback effect");
-        setRenderingSupported(false);
-        return;
-      }
-      
-      // Cleanup any existing engine just in case
-      if (webglEngine) webglEngine.destroy();
-
-      webglEngine = new WebGLEngine();
-      const webglSuccess = webglEngine.init(webglCanvasRef, vertexShader, fragmentShader);
-      
-      if (webglSuccess) {
-        console.log("WebGL init successful");
-        setRenderingSupported(true);
-        webglEngine.startRenderLoop(() => ({
-          time: performance.now() / 1000,
-          intensity: sessionGetters.getCurrentStep()?.visualIntensity || 0.3,
-          tempoPhase: tempoProgress(),
-          screenSize: [window.innerWidth, window.innerHeight],
-        }));
-      } else {
-        console.error("WebGL init failed in effect");
-        setRenderingSupported(false);
-      }
-    }
-  });
 
   onMount(async () => {
     try {
@@ -238,43 +200,27 @@ export default function GuidedSession() {
         });
     }
 
-    // Initialize WebGPU or WebGL (with fallback)
+    // Initialize WebGL
     console.log("CHECKPOINT 12: Initializing graphics...");
-    if (webgpuCanvasRef) {
-      // Try WebGPU first
-      webgpuEngine = new WebGPUEngine();
-      
-      const timeoutMs = 3000;
-      const timeoutPromise = new Promise<boolean>((_, reject) => {
-        setTimeout(() => reject(new Error(`WebGPU init timed out after ${timeoutMs}ms`)), timeoutMs);
-      });
+    if (webglCanvasRef) {
+      webglEngine = new WebGLEngine();
+      const webglSuccess = webglEngine.init(webglCanvasRef, vertexShader, fragmentShader);
 
-      let webgpuSuccess = false;
-      try {
-        webgpuSuccess = await Promise.race([
-        webgpuEngine.init(webgpuCanvasRef, intensityShader),
-          timeoutPromise
-        ]);
-      } catch (e) {
-        console.warn("WebGPU init failed or timed out:", e);
-        webgpuSuccess = false;
-      }
-      
-      if (webgpuSuccess) {
+      if (webglSuccess) {
         setRenderingSupported(true);
-        webgpuEngine.startRenderLoop(() => ({
-          time: performance.now() / 1000, 
+        webglEngine.startRenderLoop(() => ({
+          time: performance.now() / 1000,
           intensity: sessionGetters.getCurrentStep()?.visualIntensity || 0.3,
           tempoPhase: tempoProgress(),
           screenSize: [window.innerWidth, window.innerHeight],
         }));
       } else {
-        // Fallback to WebGL
-        console.warn("Falling back to WebGL...");
-        webgpuEngine = null;
-        setFallbackToWebGL(true);
-        // Effect will handle init
+        console.error("WebGL init failed");
+        setRenderingSupported(false);
       }
+    } else {
+      console.error("WebGL canvas ref missing");
+      setRenderingSupported(false);
     }
 
     // Do NOT start session automatically. Wait for user interaction.
@@ -305,7 +251,6 @@ export default function GuidedSession() {
 
   onCleanup(() => {
     sessionEngine?.stop();
-    webgpuEngine?.destroy();
     webglEngine?.destroy();
     voiceCoach?.clearQueue();
   });
@@ -385,35 +330,25 @@ export default function GuidedSession() {
           </div>
         </Show>
 
-      {/* Rendering Canvas (WebGPU or WebGL) */}
+      {/* Rendering Canvas (WebGL) */}
       <Show when={renderingSupported()} fallback={
         <div class="flex items-center justify-center h-full text-white">
           <div class="text-center space-y-4">
             <div class="text-2xl">Graphics Not Supported</div>
             <div class="text-muted-foreground">
-              Your browser doesn't support WebGL or WebGPU. Please update to a modern browser.
+              Your browser doesn't support WebGL. Please update to a modern browser.
             </div>
             <Button onClick={() => navigate("/")}>Go Back</Button>
           </div>
         </div>
       }>
-        <Show when={!fallbackToWebGL()} fallback={
-          <canvas
-            id="webgl-canvas"
-            ref={webglCanvasRef}
-            width={window.innerWidth}
-            height={window.innerHeight}
-            class="absolute inset-0"
-          />
-        }>
-          <canvas
-            id="webgpu-canvas"
-            ref={webgpuCanvasRef}
-            width={window.innerWidth}
-            height={window.innerHeight}
-            class="absolute inset-0"
-          />
-        </Show>
+        <canvas
+          id="webgl-canvas"
+          ref={webglCanvasRef}
+          width={window.innerWidth}
+          height={window.innerHeight}
+          class="absolute inset-0"
+        />
       </Show>
 
       {/* Tempo Visualizer Overlay */}
