@@ -70,6 +70,11 @@ export class SessionEngine {
     const currentStep = this.getCurrentStep();
     if (currentStep) {
         if (currentStep.type === "work" && currentStep.repStructure && currentStep.repStructure.length > 0 && currentStep.exercise) {
+            // Emit current phase cue on resume to re-orient user
+            if (this.tempoEngine) {
+                 const currentPhase = this.tempoEngine.getCurrentPhase();
+                 this.emit("cue", { type: "tempo", phase: currentPhase.type });
+            }
             this.startTempoLoop();
         } else {
             console.log("SessionEngine: Resuming timer");
@@ -136,6 +141,10 @@ export class SessionEngine {
       this.timer.stop(); 
       this.tempoEngine = new TempoEngine(step.repStructure, step.exercise.reps);
       this.tempoEngine.start();
+      // Emit initial cue for the first phase
+      const initialPhase = this.tempoEngine.getCurrentPhase();
+      this.emit("cue", { type: "tempo", phase: initialPhase.type });
+      
       this.startTempoLoop();
 
     } else {

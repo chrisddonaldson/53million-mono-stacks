@@ -79,7 +79,7 @@ export class TempoEngine {
     };
   }
 
-  private getCurrentPhase(): StepPhase {
+  getCurrentPhase(): StepPhase {
     return this.phases[this.currentPhaseIndex];
   }
 
