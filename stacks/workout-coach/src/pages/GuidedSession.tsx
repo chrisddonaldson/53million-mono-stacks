@@ -62,6 +62,7 @@ export default function GuidedSession() {
   const [elapsed, setElapsed] = createSignal(0);
   const [stepElapsed, setStepElapsed] = createSignal(0);
   const [renderingSupported, setRenderingSupported] = createSignal(true);
+  const [fallbackToWebGL, setFallbackToWebGL] = createSignal(false);
   const [hasStarted, setHasStarted] = createSignal(false);
   const [showSummary, setShowSummary] = createSignal(false);
   const [showPause, setShowPause] = createSignal(false);
@@ -233,21 +234,35 @@ export default function GuidedSession() {
         }));
       } else {
         // Fallback to WebGL
+        console.warn("Falling back to WebGL...");
+        setFallbackToWebGL(true);
         webgpuEngine = null;
-        webglEngine = new WebGLEngine();
-        const webglSuccess = webglEngine.init(canvasRef, vertexShader, fragmentShader);
         
-        if (webglSuccess) {
-          setRenderingSupported(true);
-          webglEngine.startRenderLoop(() => ({
-            time: performance.now() / 1000,
-            intensity: sessionGetters.getCurrentStep()?.visualIntensity || 0.3,
-            tempoPhase: tempoProgress(),
-            screenSize: [window.innerWidth, window.innerHeight],
-          }));
-        } else {
-          setRenderingSupported(false);
-        }
+        // Give SolidJS a moment to unmount/remount the canvas with new key
+        setTimeout(() => {
+            if (!canvasRef) {
+                console.error("Canvas ref missing after fallback update");
+                setRenderingSupported(false);
+                return;
+            }
+            
+            webglEngine = new WebGLEngine();
+            const webglSuccess = webglEngine.init(canvasRef, vertexShader, fragmentShader);
+            
+            if (webglSuccess) {
+              console.log("WebGL init successful");
+              setRenderingSupported(true);
+              webglEngine.startRenderLoop(() => ({
+                time: performance.now() / 1000,
+                intensity: sessionGetters.getCurrentStep()?.visualIntensity || 0.3,
+                tempoPhase: tempoProgress(),
+                screenSize: [window.innerWidth, window.innerHeight],
+              }));
+            } else {
+              console.error("WebGL init failed");
+              setRenderingSupported(false);
+            }
+        }, 50);
       }
     }
 
@@ -371,12 +386,21 @@ export default function GuidedSession() {
           </div>
         </div>
       }>
-        <canvas
-          ref={canvasRef}
-          width={window.innerWidth}
-          height={window.innerHeight}
-          class="absolute inset-0"
-        />
+        <Show when={!fallbackToWebGL()} fallback={
+          <canvas
+            ref={canvasRef}
+            width={window.innerWidth}
+            height={window.innerHeight}
+            class="absolute inset-0"
+          />
+        }>
+          <canvas
+            ref={canvasRef}
+            width={window.innerWidth}
+            height={window.innerHeight}
+            class="absolute inset-0"
+          />
+        </Show>
       </Show>
 
       {/* Tempo Visualizer Overlay */}
