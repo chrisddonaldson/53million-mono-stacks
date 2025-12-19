@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  donetick:
+    image: donetick/donetick:v0.1.64
+    container_name: donetick
+    restart: unless-stopped
+    ports:
+      - "2021:2021" # remove this if your reverse proxy will handle access
+    environment:
+      DT_ENV: "selfhosted"
+      DT_SQLITE_PATH: "/donetick-data/donetick.db"
+      DT_JWT_SECRET: "CHANGE_ME_TO_A_LONG_RANDOM_STRING"
+      # If serving via proxy with HTTPS, set:
+      # DT_ROOT_URL: "https://donetick.example.com"
+    volumes:
+      - donetick_data:/donetick-data
+      - donetick_config:/config
+      - donetick_uploads:/uploads
+    networks:
+      - proxy
+      - default
+
+volumes:
+  donetick_data:
+  donetick_config:
+  donetick_uploads:
+
+networks:
+  proxy:
+    external: true
