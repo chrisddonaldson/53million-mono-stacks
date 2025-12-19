@@ -103,7 +103,7 @@ export class VoiceCoach {
   }
 
   async announceRep(current: number, total?: number): Promise<void> {
-    const text = total ? `Rep ${current} of ${total}` : `Rep ${current}`;
+    const text = `${current}`;
     await this.announce({
       text,
       time: 0,

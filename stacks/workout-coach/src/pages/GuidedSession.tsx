@@ -17,7 +17,6 @@ import fragmentShader from "../shaders/intensity.frag.glsl?raw";
 
 import wristWorkout from "../data/workouts/wrist-workout.yaml";
 import { YamlStepGenerator } from "../engines/workflow/YamlStepGenerator";
-import TempoVisualizer from "../components/session/TempoVisualizer";
 import type { YamlWorkout } from "../types/yaml-workout";
 import { SessionEngine } from "../engines/SessionEngine";
 
@@ -65,6 +64,29 @@ export default function GuidedSession() {
   const [tempoProgress, setTempoProgress] = createSignal(0);
   const [currentRep, setCurrentRep] = createSignal(0);
   const [tempoPhase, setTempoPhase] = createSignal<string>("down");
+  
+  const getPhaseColor = () => {
+    const step = sessionGetters.getCurrentStep();
+    if (step?.type === "rest") return [0.2, 0.45, 1.0] as const;
+    if (step?.type === "setup" || step?.type === "warmup" || step?.type === "transition" || step?.type === "summary") {
+      return [0.5, 0.5, 0.5] as const;
+    }
+    const phase = tempoPhase();
+    if (phase === "concentric" || phase === "up") return [1.0, 0.2, 0.2] as const;
+    if (phase === "hold") return [1.0, 0.85, 0.2] as const;
+    if (phase === "eccentric" || phase === "down") return [0.2, 0.85, 0.3] as const;
+    if (phase === "rest") return [0.2, 0.45, 1.0] as const;
+    return [0.5, 0.5, 0.5] as const;
+  };
+
+  const getPhaseProgress = () => {
+    const step = sessionGetters.getCurrentStep();
+    if (step?.repStructure && step.repStructure.length > 0) return tempoProgress();
+    if (step?.duration && step.duration > 0) {
+      return Math.min(1, stepElapsed() / step.duration);
+    }
+    return 0;
+  };
 
   onMount(async () => {
     try {
@@ -211,7 +233,8 @@ export default function GuidedSession() {
         webglEngine.startRenderLoop(() => ({
           time: performance.now() / 1000,
           intensity: sessionGetters.getCurrentStep()?.visualIntensity || 0.3,
-          tempoPhase: tempoProgress(),
+          tempoPhase: getPhaseProgress(),
+          phaseColor: getPhaseColor(),
           screenSize: [window.innerWidth, window.innerHeight],
         }));
       } else {
@@ -351,19 +374,6 @@ export default function GuidedSession() {
         />
       </Show>
 
-      {/* Tempo Visualizer Overlay */}
-      <Show when={currentStep()?.repStructure}>
-        <div class="absolute inset-0 flex items-center justify-center p-[clamp(0.5rem,4vw,2rem)] pointer-events-none z-10">
-            <div class="w-full max-w-[min(90vw,26rem)] pointer-events-auto">
-                <TempoVisualizer 
-                    repStructure={currentStep()!.repStructure}
-                    elapsedTime={stepElapsed()}
-                    duration={currentStep()!.duration}
-                />
-            </div>
-        </div>
-      </Show>
-
       {/* HUD Overlay */}
       <div class="absolute inset-0 pointer-events-none">
         {/* Page Label */}
@@ -456,8 +466,8 @@ export default function GuidedSession() {
         </div>
 
         {/* Bottom Toolbar */}
-        <div class="absolute bottom-2 left-0 right-0 flex justify-center pointer-events-auto px-2 sm:bottom-6">
-          <div class="flex gap-[clamp(0.5rem,3vw,1rem)] bg-black/60 backdrop-blur-sm rounded-full px-[clamp(0.6rem,4vw,1.5rem)] py-[clamp(0.4rem,3vw,0.9rem)]">
+        <div class="absolute bottom-2 left-0 right-0 flex flex-col items-center justify-center pointer-events-auto px-2 sm:bottom-6">
+          <div class="flex flex-row items-center gap-[clamp(0.5rem,3vw,1rem)] bg-black/60 backdrop-blur-sm rounded-full px-[clamp(0.6rem,4vw,1.5rem)] py-[clamp(0.4rem,3vw,0.9rem)]">
             <Button
               size="lg"
               variant="ghost"
