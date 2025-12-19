@@ -8,6 +8,8 @@ export interface TTSOptions {
 export class TTSEngine {
   private synth: SpeechSynthesis;
   private voice: SpeechSynthesisVoice | null = null;
+  private activeResolve: (() => void) | null = null;
+  private activeReject: ((reason?: unknown) => void) | null = null;
   private defaultOptions: Required<TTSOptions> = {
     rate: 1.0,
     pitch: 1.0,
@@ -57,12 +59,13 @@ export class TTSEngine {
         return;
       }
 
-      // Cancel any ongoing speech - wait, this might break queueing if we call speak in parallel?
-      // VoiceCoach manages the queue, so speak() is called sequentially.
-      this.synth.cancel();
+      // Ensure any pending speech resolves before starting a new utterance.
+      this.cancel();
 
       const utterance = new SpeechSynthesisUtterance(text);
       this.activeUtterance = utterance; // Keep ref
+      this.activeResolve = resolve;
+      this.activeReject = reject;
       
       if (this.voice) {
         utterance.voice = this.voice;
@@ -74,12 +77,16 @@ export class TTSEngine {
       utterance.lang = options?.lang ?? this.defaultOptions.lang;
 
       utterance.onend = () => {
-          this.activeUtterance = null;
-          resolve();
+        this.activeUtterance = null;
+        this.activeResolve = null;
+        this.activeReject = null;
+        resolve();
       };
       utterance.onerror = (event) => {
         console.error("TTS error:", event);
         this.activeUtterance = null;
+        this.activeResolve = null;
+        this.activeReject = null;
         reject(event);
       };
 
@@ -88,6 +95,11 @@ export class TTSEngine {
   }
 
   cancel(): void {
+    if (this.activeResolve) {
+      this.activeResolve();
+    }
+    this.activeResolve = null;
+    this.activeReject = null;
     if (this.activeUtterance) {
       this.activeUtterance.onend = null;
       this.activeUtterance.onerror = null;

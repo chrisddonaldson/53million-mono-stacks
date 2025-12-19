@@ -7,6 +7,8 @@ export class VoiceCoach {
   private cueQueue: Array<{ text: string; options?: TTSOptions }> = [];
   private isSpeaking: boolean = false;
   private isEnabled: boolean = true;
+  private queueVersion: number = 0;
+  private masterVolume: number = 1;
 
   constructor() {
     this.tts = new TTSEngine();
@@ -16,18 +18,22 @@ export class VoiceCoach {
   async announce(cue: VoiceCue): Promise<void> {
     if (!this.isEnabled) return;
 
-    this.cueQueue.push({
-      text: cue.text,
-      options: cue.options,
-    });
-
-    if (!this.isSpeaking) {
-      await this.processQueue();
-    }
+    const options = this.applyMasterVolume(cue.options);
+    this.queueVersion += 1;
+    const version = this.queueVersion;
+    this.cueQueue = [
+      {
+        text: cue.text,
+        options,
+      },
+    ];
+    this.tts.cancel();
+    this.isSpeaking = false;
+    await this.processQueue(version);
   }
 
-  private async processQueue(): Promise<void> {
-    while (this.cueQueue.length > 0) {
+  private async processQueue(version: number): Promise<void> {
+    while (this.cueQueue.length > 0 && version === this.queueVersion) {
       this.isSpeaking = true;
       const cue = this.cueQueue.shift()!;
       
@@ -135,6 +141,7 @@ export class VoiceCoach {
   }
 
   clearQueue(): void {
+    this.queueVersion += 1;
     this.cueQueue = [];
     this.tts.cancel();
     this.isSpeaking = false;
@@ -146,6 +153,18 @@ export class VoiceCoach {
 
   resume(): void {
     this.tts.resume();
+  }
+
+  setMasterVolume(volume: number): void {
+    this.masterVolume = Math.max(0, Math.min(1, volume));
+  }
+
+  private applyMasterVolume(options?: TTSOptions): TTSOptions | undefined {
+    if (!options) {
+      return { volume: this.masterVolume };
+    }
+    const baseVolume = options.volume ?? 1;
+    return { ...options, volume: Math.max(0, Math.min(1, baseVolume * this.masterVolume)) };
   }
 }
 

@@ -65,6 +65,7 @@ export default function GuidedSession() {
   const [tempoProgress, setTempoProgress] = createSignal(0);
   const [currentRep, setCurrentRep] = createSignal(0);
   const [tempoPhase, setTempoPhase] = createSignal<string>("down");
+  const [showVolume, setShowVolume] = createSignal(false);
   
   const getPhaseColor = () => {
     const step = sessionGetters.getCurrentStep();
@@ -321,6 +322,9 @@ export default function GuidedSession() {
     settingsActions.setAudioSettings({ masterVolume: nextValue });
     voiceCoach?.setMasterVolume(nextValue);
   };
+  const handleToggleVolumePanel = () => {
+    setShowVolume(!showVolume());
+  };
   const handleSkipFromPause = () => {
     setShowPause(false);
     sessionEngine?.resume();
@@ -543,22 +547,34 @@ export default function GuidedSession() {
               size="lg"
               variant="ghost"
               class="rounded-full w-[clamp(2rem,10vw,2.6rem)] h-[clamp(2rem,10vw,2.6rem)] p-0 text-white text-[clamp(0.8rem,3.5vw,1.1rem)]"
-              onClick={handleToggleMute}
+              onClick={handleToggleVolumePanel}
             >
               {settingsStore.audio.masterVolume > 0 ? "🔊" : "🔇"}
             </Button>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={settingsStore.audio.masterVolume ?? 0.5}
-              onInput={handleMasterVolumeChange}
-              class="w-[clamp(6rem,30vw,12rem)] accent-primary"
-            />
-            <div class="text-[clamp(0.6rem,2.5vw,0.85rem)] w-[clamp(2rem,8vw,3rem)] text-right">
-              {Math.round((settingsStore.audio.masterVolume ?? 0.5) * 100)}%
-            </div>
+            <Show when={showVolume()}>
+              <div class="flex items-center gap-[clamp(0.4rem,3vw,0.8rem)]">
+                <Button
+                  size="lg"
+                  variant="ghost"
+                  class="rounded-full w-[clamp(1.8rem,9vw,2.4rem)] h-[clamp(1.8rem,9vw,2.4rem)] p-0 text-white text-[clamp(0.7rem,3vw,1rem)]"
+                  onClick={handleToggleMute}
+                >
+                  {settingsStore.audio.masterVolume > 0 ? "Mute" : "Unmute"}
+                </Button>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={settingsStore.audio.masterVolume ?? 0.5}
+                  onInput={handleMasterVolumeChange}
+                  class="w-[clamp(6rem,30vw,12rem)] accent-primary"
+                />
+                <div class="text-[clamp(0.6rem,2.5vw,0.85rem)] w-[clamp(2rem,8vw,3rem)] text-right">
+                  {Math.round((settingsStore.audio.masterVolume ?? 0.5) * 100)}%
+                </div>
+              </div>
+            </Show>
           </div>
 
           {/* Step minimap */}

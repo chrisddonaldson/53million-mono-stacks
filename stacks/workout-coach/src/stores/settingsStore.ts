@@ -2,6 +2,7 @@ import { createStore } from "solid-js/store";
 
 interface AudioSettings {
   voiceVolume: number; // 0-1
+  masterVolume: number; // 0-1
   musicDucking: boolean;
 }
 
@@ -21,9 +22,10 @@ interface SettingsStoreState {
   workout: WorkoutSettings;
 }
 
-const [settingsStore, setSettingsStore] = createStore<SettingsStoreState>({
+const defaultSettings: SettingsStoreState = {
   audio: {
     voiceVolume: 0.8,
+    masterVolume: 0.5,
     musicDucking: true,
   },
   display: {
@@ -34,7 +36,9 @@ const [settingsStore, setSettingsStore] = createStore<SettingsStoreState>({
     defaultRestTime: 90,
     autoAdvance: true,
   },
-});
+};
+
+const [settingsStore, setSettingsStore] = createStore<SettingsStoreState>(defaultSettings);
 
 // Actions
 export const settingsActions = {
@@ -66,7 +70,13 @@ export const settingsActions = {
       const saved = localStorage.getItem("workout-coach-settings");
       if (saved) {
         const parsed = JSON.parse(saved);
-        setSettingsStore(parsed);
+        setSettingsStore({
+          ...defaultSettings,
+          ...parsed,
+          audio: { ...defaultSettings.audio, ...parsed.audio },
+          display: { ...defaultSettings.display, ...parsed.display },
+          workout: { ...defaultSettings.workout, ...parsed.workout },
+        });
       }
     } catch (error) {
       console.error("Failed to load settings:", error);
@@ -74,20 +84,7 @@ export const settingsActions = {
   },
 
   resetToDefaults() {
-    setSettingsStore({
-      audio: {
-        voiceVolume: 0.8,
-        musicDucking: true,
-      },
-      display: {
-        theme: "dark",
-        hapticsEnabled: true,
-      },
-      workout: {
-        defaultRestTime: 90,
-        autoAdvance: true,
-      },
-    });
+    setSettingsStore(defaultSettings);
     this.saveToLocalStorage();
   },
 };
