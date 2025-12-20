@@ -8,6 +8,7 @@ uniform float u_intensity;     // 0-1 (rest=0.2, work=0.7-1.0)
 uniform float u_tempo_phase;   // 0-1 within current tempo phase
 uniform vec3 u_phase_color;    // RGB color for current phase
 uniform float u_phase_type;    // 0 up, 1 hold, 2 down, 3 rest, 4 setup/other
+uniform float u_hold_anchor;   // -1 bottom, 1 top
 uniform vec2 u_resolution;
 
 varying vec2 v_uv;
@@ -63,7 +64,8 @@ void main() {
     if (u_phase_type < 0.5) {
       ballY = mix(-0.7, 0.7, u_tempo_phase);
     } else if (u_phase_type < 1.5) {
-      ballY = 0.7;
+      float anchor = abs(u_hold_anchor) < 0.01 ? 1.0 : sign(u_hold_anchor);
+      ballY = 0.7 * anchor;
     } else {
       ballY = mix(0.7, -0.7, u_tempo_phase);
     }

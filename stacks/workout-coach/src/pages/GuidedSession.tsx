@@ -1,4 +1,4 @@
-import { createSignal, onMount, onCleanup, Show } from "solid-js";
+import { createMemo, createSignal, onMount, onCleanup, Show } from "solid-js";
 import { useParams, useNavigate } from "@solidjs/router";
 import { sessionStore, sessionActions, sessionGetters } from "../stores/sessionStore";
 import { workoutActions } from "../stores/workoutStore";
@@ -65,20 +65,95 @@ export default function GuidedSession() {
   const [tempoProgress, setTempoProgress] = createSignal(0);
   const [currentRep, setCurrentRep] = createSignal(0);
   const [tempoPhase, setTempoPhase] = createSignal<string>("down");
+  const [holdAnchor, setHoldAnchor] = createSignal(1);
   const [showVolume, setShowVolume] = createSignal(false);
+
+  const exerciseTree = createMemo(() => {
+    const session = sessionStore.currentSession;
+    if (!session) {
+      return {
+        exercises: [] as Array<{ name: string; sets: Array<{ number: number; stepIndex: number }> }>,
+        currentExerciseIndex: -1,
+        currentSetNumber: null as number | null,
+        currentStepIndex: -1,
+      };
+    }
+
+    const exercises: Array<{ name: string; sets: Array<{ number: number; stepIndex: number }> }> = [];
+    const exerciseMap = new Map<string, { index: number; setIndex: Map<number, number> }>();
+
+    session.timeline.forEach((step, index) => {
+      const name = step.exerciseName || step.exercise?.name;
+      if (!name) return;
+
+      let entry = exerciseMap.get(name);
+      if (!entry) {
+        entry = { index: exercises.length, setIndex: new Map() };
+        exerciseMap.set(name, entry);
+        exercises.push({ name, sets: [] });
+      }
+
+      if (step.setNumber && !entry.setIndex.has(step.setNumber)) {
+        entry.setIndex.set(step.setNumber, index);
+        exercises[entry.index].sets.push({ number: step.setNumber, stepIndex: index });
+      }
+    });
+
+    exercises.forEach((exercise) => {
+      exercise.sets.sort((a, b) => a.number - b.number);
+    });
+
+    const extractContext = (step: typeof session.timeline[number] | undefined) => {
+      if (!step) return null;
+      const name = step.exerciseName || step.exercise?.name;
+      if (!name) return null;
+      return {
+        name,
+        setNumber: step.setNumber ?? null,
+      };
+    };
+
+    const currentIndex = session.currentStepIndex;
+    let context = extractContext(session.timeline[currentIndex]);
+
+    if (!context) {
+      for (let i = currentIndex + 1; i < session.timeline.length; i += 1) {
+        context = extractContext(session.timeline[i]);
+        if (context) break;
+      }
+    }
+
+    if (!context) {
+      for (let i = currentIndex - 1; i >= 0; i -= 1) {
+        context = extractContext(session.timeline[i]);
+        if (context) break;
+      }
+    }
+
+    const currentExerciseIndex = context
+      ? exercises.findIndex((exercise) => exercise.name === context!.name)
+      : -1;
+
+    return {
+      exercises,
+      currentExerciseIndex,
+      currentSetNumber: context?.setNumber ?? null,
+      currentStepIndex: currentIndex,
+    };
+  });
   
   const getPhaseColor = () => {
     const step = sessionGetters.getCurrentStep();
-    if (step?.type === "rest") return [0.2, 0.45, 1.0] as const;
+    if (step?.type === "rest") return [0.2, 0.45, 1.0] as [number, number, number];
     if (step?.type === "setup" || step?.type === "warmup" || step?.type === "transition" || step?.type === "summary") {
-      return [0.5, 0.5, 0.5] as const;
+      return [0.5, 0.5, 0.5] as [number, number, number];
     }
     const phase = tempoPhase();
-    if (phase === "concentric" || phase === "up") return [1.0, 0.2, 0.2] as const;
-    if (phase === "hold") return [1.0, 0.85, 0.2] as const;
-    if (phase === "eccentric" || phase === "down") return [0.2, 0.85, 0.3] as const;
-    if (phase === "rest") return [0.2, 0.45, 1.0] as const;
-    return [0.5, 0.5, 0.5] as const;
+    if (phase === "concentric" || phase === "up") return [1.0, 0.2, 0.2] as [number, number, number];
+    if (phase === "hold") return [1.0, 0.85, 0.2] as [number, number, number];
+    if (phase === "eccentric" || phase === "down") return [0.2, 0.85, 0.3] as [number, number, number];
+    if (phase === "rest") return [0.2, 0.45, 1.0] as [number, number, number];
+    return [0.5, 0.5, 0.5] as [number, number, number];
   };
 
   const getPhaseType = () => {
@@ -136,7 +211,7 @@ export default function GuidedSession() {
           microworkoutTitle,
           {
             globalRestTime: settingsStore.workout.defaultRestTime,
-            voiceEnabled: settingsStore.audio.voiceVolume > 0,
+            voiceEnabled: (settingsStore.audio.masterVolume ?? 0.5) > 0,
             musicDucking: settingsStore.audio.musicDucking,
             motivationalLevel: "medium",
             progressionVariant: "standard",
@@ -148,7 +223,7 @@ export default function GuidedSession() {
          
          const generator = new YamlStepGenerator(yamlData, {
             globalRestTime: settingsStore.workout.defaultRestTime,
-            voiceEnabled: settingsStore.audio.voiceVolume > 0,
+            voiceEnabled: (settingsStore.audio.masterVolume ?? 0.5) > 0,
             musicDucking: settingsStore.audio.musicDucking,
             motivationalLevel: "medium",
             progressionVariant: "standard",
@@ -167,7 +242,7 @@ export default function GuidedSession() {
           workoutId,
           {
             globalRestTime: settingsStore.workout.defaultRestTime,
-            voiceEnabled: settingsStore.audio.voiceVolume > 0,
+            voiceEnabled: (settingsStore.audio.masterVolume ?? 0.5) > 0,
             musicDucking: settingsStore.audio.musicDucking,
             motivationalLevel: "medium",
             progressionVariant: "standard",
@@ -188,31 +263,30 @@ export default function GuidedSession() {
         
         // Bind SessionEngine Events
         sessionEngine.on("tick", (data: any) => {
+            // Update step elapsed
             if (data.elapsed !== undefined) {
-               // setElapsed(data.elapsed); // Wait, tick elapsed is Step elapsed or Global?
-               // In SessionEngine I implemented onTick(elapsed, remaining) for timer.
-               // It's step elapsed if using timer for step.
-               setStepElapsed(data.elapsed);
-            }
-            // Update Global Elapsed from Session Store (which Engine updates? Engine should update store)
-            // Or Engine should emit global elapsed.
-            setElapsed(Math.floor((Date.now() - sessionStore.currentSession!.startTime - (sessionStore.currentSession!.pausedTime || 0)) / 1000));
-            sessionActions.updateElapsedTime(elapsed());
-            
-            if (data.stepElapsed !== undefined) {
-                setStepElapsed(data.stepElapsed);
+                setStepElapsed(data.elapsed);
             }
             
+            // Update tempo progress for WebGL
             if (data.tempo) {
-               setTempoPhase(data.tempo.phase);
-               setCurrentRep(data.tempo.rep);
-               setTempoProgress(data.tempo.progress);
+                setTempoProgress(data.tempo.progress);
+                setCurrentRep(data.tempo.rep);
             }
+            
+            // Update global elapsed (SessionEngine handles this in store)
+            setElapsed(Math.floor((Date.now() - sessionStore.currentSession!.startTime - (sessionStore.currentSession!.pausedTime || 0)) / 1000));
         });
 
-// in onStepChange
+        // Visual state updates from SessionEngine
+        sessionEngine.on("visualState", (state: any) => {
+            setTempoPhase(state.phase);
+            setCurrentRep(state.rep);
+            setTempoProgress(state.progress);
+            setHoldAnchor(state.holdAnchor);
+        });
+
         sessionEngine.on("stepChange", (_step: any) => {
-            // Force update signals if needed
             setStepElapsed(0);
         });
 
@@ -226,22 +300,24 @@ export default function GuidedSession() {
         });
 
         sessionEngine.on("cue", (cue: any) => {
-            if (settingsStore.audio.voiceVolume > 0) {
-               if (cue.type === "tempo") {
-                   voiceCoach.announceTempo(cue.phase);
-               } else if (cue.type === "rep") {
-                   if (repAnnounceTimeout) {
-                     clearTimeout(repAnnounceTimeout);
-                     repAnnounceTimeout = null;
-                   }
-                   const delayMs = typeof cue.delayMs === "number" ? cue.delayMs : 0;
-                   repAnnounceTimeout = window.setTimeout(() => {
-                     voiceCoach.announceRep(cue.rep, cue.totalReps);
-                     repAnnounceTimeout = null;
-                   }, delayMs);
-               } else {
-                   voiceCoach.announce(cue);
-               }
+            console.log(`[GuidedSession] Received cue:`, cue, `volume=${settingsStore.audio.masterVolume}`);
+            if ((settingsStore.audio.masterVolume ?? 0.5) > 0) {
+                if (cue.type === "tempo") {
+                    console.log(`[GuidedSession] Calling voiceCoach.announceTempo(${cue.phase}, ${cue.rep})`);
+                    voiceCoach.announceTempo(cue.phase, cue.rep);
+                } else if (cue.type === "rep") {
+                    if (repAnnounceTimeout) {
+                        clearTimeout(repAnnounceTimeout);
+                        repAnnounceTimeout = null;
+                    }
+                    const delayMs = typeof cue.delayMs === "number" ? cue.delayMs : 0;
+                    repAnnounceTimeout = window.setTimeout(() => {
+                        voiceCoach.announceRep(cue.rep, cue.totalReps);
+                        repAnnounceTimeout = null;
+                    }, delayMs);
+                } else {
+                    voiceCoach.announce(cue);
+                }
             }
         });
     }
@@ -260,6 +336,7 @@ export default function GuidedSession() {
           tempoPhase: getPhaseProgress(),
           phaseColor: getPhaseColor(),
           phaseType: getPhaseType(),
+          holdAnchor: holdAnchor(),
           screenSize: [window.innerWidth, window.innerHeight],
         }));
       } else {
@@ -271,8 +348,8 @@ export default function GuidedSession() {
       setRenderingSupported(false);
     }
 
-    // Do NOT start session automatically. Wait for user interaction.
-    // sessionEngine.start(); removed.
+    // Don't start automatically - wait for user interaction for TTS
+    // handleStart() removed to comply with browser autoplay policies
     
     // Mark as loaded
     setIsLoading(false);
@@ -286,15 +363,20 @@ export default function GuidedSession() {
   });
 
   const handleStart = async () => {
-    // Resume/Unmute Audio Contexts
+    console.log("[GuidedSession] User clicked START - unlocking TTS");
+    
+    // CRITICAL: Unlock TTS with this user gesture
     if (voiceCoach) {
-        await voiceCoach.resume(); // Ensure context is unlocked
+      await voiceCoach.unlock();
     }
     
-    if (sessionEngine) {
+    // Small delay to ensure audio context is fully unlocked
+    setTimeout(() => {
+      if (sessionEngine) {
         sessionEngine.start();
-    }
-    setHasStarted(true);
+      }
+      setHasStarted(true);
+    }, 100);
   };
 
   onCleanup(() => {
@@ -341,7 +423,6 @@ export default function GuidedSession() {
 
   const currentStep = () => sessionGetters.getCurrentStep();
   const nextStep = () => sessionGetters.getNextStep();
-  const progress = () => sessionGetters.getProgress();
 
   // REMOVED early returns for loading/error to allow canvas to mount
 
@@ -373,16 +454,14 @@ export default function GuidedSession() {
           </div>
         </Show>
 
-        {/* Start Overlay - Required for Audio Autoplay Policy */}
+        {/* Start Button - Required for TTS autoplay policy */}
         <Show when={!isLoading() && !initError() && !hasStarted()}>
           <div
-            class="absolute inset-0 z-40 flex items-center justify-center bg-black/80 backdrop-blur-sm cursor-pointer"
+            class="absolute inset-0 z-40 flex items-center justify-center bg-black/90 backdrop-blur-sm cursor-pointer"
             onClick={handleStart}
           >
-            <div class="text-center space-y-4 animate-pulse px-4">
-              <div class="text-[clamp(2.25rem,10vw,3.75rem)]">▶</div>
-              <div class="text-[clamp(1rem,4.5vw,1.5rem)] font-bold uppercase tracking-widest">Tap to Start</div>
-              <div class="text-[clamp(0.7rem,3vw,1rem)] text-white/60">Enable audio and begin workout</div>
+            <div class="text-center space-y-6 animate-pulse px-4">
+              <div class="text-[clamp(3rem,12vw,5rem)] font-bold text-primary">START</div>
             </div>
           </div>
         </Show>
@@ -421,192 +500,233 @@ export default function GuidedSession() {
 
       {/* HUD Overlay */}
       <div class="absolute inset-0 pointer-events-none">
-        {/* Page Label */}
-        <div class="absolute top-2 left-2 text-[clamp(0.55rem,2vw,0.75rem)] text-white/60 pointer-events-none">
-          System Menu / Guided Session
-        </div>
-        {/* Top Bar */}
-        <div class="pt-2 px-2 sm:pt-4 sm:px-4 flex flex-wrap justify-between gap-x-4 gap-y-1 text-white text-[clamp(0.65rem,2.4vw,0.9rem)] pointer-events-auto">
-          <div class="shrink-0">Elapsed: {formatTime(elapsed())}</div>
-          <div class="shrink-0">
-            <Show when={currentStep()?.duration && currentStep()!.duration > 0}>
-              <div>Step: {formatTime(stepElapsed())} / {formatTime(currentStep()!.duration)}</div>
-            </Show>
-          </div>
-          <div class="shrink-0">Remaining: {formatTime(sessionGetters.getRemainingTime())}</div>
-        </div>
-
-        {/* Center HUD */}
-        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-auto px-2">
-          <div class="bg-black/60 backdrop-blur-sm rounded-lg p-[clamp(0.75rem,3.5vw,1.5rem)] w-[min(92vw,28rem)] max-h-[60vh] overflow-y-auto text-white">
-            <Show when={currentStep()} fallback={
-              <div class="text-center">
-                <div class="text-[clamp(0.9rem,4vw,1.25rem)] text-red-500">No current step available</div>
-                <div class="text-sm mt-2">Session: {sessionStore.currentSession ? "exists" : "null"}</div>
-                <div class="text-sm">Timeline length: {sessionStore.currentSession?.timeline.length || 0}</div>
+        {/* Top Toolbar */}
+        <div class="absolute top-[clamp(0.5rem,4vw,1.5rem)] left-2 right-2 pointer-events-auto sm:left-4 sm:right-4 pr-[env(safe-area-inset-right,0)] pl-[env(safe-area-inset-left,0)] pt-[env(safe-area-inset-top,0)]">
+          <div class="flex flex-row items-center justify-between gap-x-2 bg-black/75 backdrop-blur-md rounded-[clamp(1rem,4vw,1.5rem)] px-3 py-2 text-white border border-white/5 shadow-2xl">
+            <div class="flex items-center gap-3 overflow-hidden">
+              <div class="shrink-0 text-primary font-bold tracking-tighter text-[clamp(0.7rem,3vw,0.9rem)]">
+                53M
               </div>
-            }>
-              {(step) => (
-                <div class="space-y-4">
-                  <div class="text-center">
-                    <div class="text-[clamp(0.65rem,2.5vw,0.9rem)] text-gray-400 uppercase">{step().type}</div>
-                    <div class="text-[clamp(1.1rem,5vw,1.7rem)] font-bold mt-2">{step().exerciseName || "Ready"}</div>
-                  </div>
-
-                  <Show when={step().setNumber}>
-                    <div class="text-center text-[clamp(0.65rem,2.4vw,0.9rem)]">
-                      Set {step().setNumber} of {step().totalSets}
-                    </div>
-                  </Show>
-
-                  <Show when={step().load}>
-                    <div class="text-center text-[clamp(0.9rem,3.2vw,1.1rem)]">{step().load}</div>
-                  </Show>
-
-                  {/* Tempo display for tempo-based exercises */}
-                  <Show when={(step().tempo || step().repStructure) && sessionEngine}>
-                    <div class="text-center space-y-2">
-                      <div class="text-[clamp(0.65rem,2.4vw,0.9rem)] text-gray-400">
-                        Rep {currentRep()} of {step().exercise?.reps}
-                      </div>
-                      <div class="flex justify-center gap-[clamp(0.25rem,2.5vw,0.5rem)] text-[clamp(0.6rem,2.2vw,0.8rem)]">
-                        <span class={tempoPhase() === "eccentric" || tempoPhase() === "down" ? "text-primary font-bold" : "text-gray-500"}>
-                          DOWN
-                        </span>
-                        <span class={tempoPhase() === "hold" ? "text-primary font-bold" : "text-gray-500"}>
-                          HOLD
-                        </span>
-                        <span class={tempoPhase() === "concentric" || tempoPhase() === "up" ? "text-primary font-bold" : "text-gray-500"}>
-                          UP
-                        </span>
-                      </div>
-                      <div class="w-full bg-gray-700 rounded-full h-2">
-                        <div
-                          class="bg-primary h-2 rounded-full transition-all"
-                          style={{ width: `${tempoProgress() * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  </Show>
-
-                  {/* Overall Progress bar */}
-                  <div class="w-full bg-gray-700 rounded-full h-2">
-                    <div
-                      class="bg-primary h-2 rounded-full transition-all"
-                      style={{ width: `${progress()}%` }}
-                    />
-                  </div>
-
-                  <Show when={nextStep()}>
-                    {(next) => (
-                      <div class="text-center text-[clamp(0.65rem,2.4vw,0.9rem)] text-gray-400">
-                        Next: {next().exerciseName || next().type}
-                      </div>
-                    )}
-                  </Show>
+              <div class="hidden sm:block w-px h-4 bg-white/20 shrink-0" />
+              <div class="flex flex-col sm:flex-row sm:items-center gap-x-3 gap-y-0.5 leading-tight overflow-hidden">
+                <div class="shrink-0 text-[clamp(0.6rem,2.2vw,0.75rem)] tabular-nums truncate">
+                  {formatTime(elapsed())}
                 </div>
-              )}
-            </Show>
+                <Show when={currentStep()?.duration && currentStep()!.duration > 0}>
+                  <div class="hidden sm:block w-1 h-1 rounded-full bg-white/20 shrink-0" />
+                  <div class="shrink-0 text-[clamp(0.6rem,2.2vw,0.75rem)] opacity-60 tabular-nums truncate">
+                    Step: {formatTime(stepElapsed())}
+                  </div>
+                </Show>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 pointer-events-auto">
+              {/* Pause/Play control */}
+              <Button
+                size="sm"
+                variant="ghost"
+                class="rounded-full w-8 h-8 p-0 text-white text-base hover:bg-white/10"
+                onClick={handlePause}
+              >
+                {sessionGetters.isActive() ? "⏸" : "▶"}
+              </Button>
+
+              {/* Volume control */}
+              <div class="relative flex items-center text-white">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  class={`rounded-full w-8 h-8 p-0 text-white text-sm transition-colors hover:bg-white/10 ${showVolume() ? 'text-primary' : ''}`}
+                  onClick={handleToggleVolumePanel}
+                >
+                  {settingsStore.audio.masterVolume > 0 ? "🔊" : "🔇"}
+                </Button>
+                
+                <Show when={showVolume()}>
+                  <div 
+                    class="absolute top-full right-0 mt-4 p-4 bg-black/80 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl flex flex-col items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-200 z-[9999]"
+                  >
+                    <div class="text-[clamp(0.6rem,2.5vw,0.85rem)] font-medium tabular-nums">
+                      {Math.round((settingsStore.audio.masterVolume ?? 0.5) * 100)}%
+                    </div>
+                    
+                    <div class="h-40 flex items-center py-2">
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.05"
+                        value={settingsStore.audio.masterVolume ?? 0.5}
+                        onInput={handleMasterVolumeChange}
+                        class="accent-primary cursor-pointer"
+                        style={{
+                          "appearance": "slider-vertical" as any,
+                          "width": "12px",
+                          "height": "160px"
+                        }}
+                      />
+                    </div>
+
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      class="text-[clamp(0.6rem,2vw,0.75rem)] uppercase tracking-wider text-white/60 hover:text-white"
+                      onClick={handleToggleMute}
+                    >
+                      {settingsStore.audio.masterVolume > 0 ? "Mute" : "Unmute"}
+                    </Button>
+                  </div>
+                </Show>
+              </div>
+
+              <div class="w-px h-4 bg-white/20 mx-1" />
+
+              <Button
+                variant="ghost"
+                class="text-white text-[clamp(0.6rem,2.3vw,0.8rem)] px-2 py-1 hover:bg-white/10"
+                onClick={handleExit}
+              >
+                Exit
+              </Button>
+            </div>
           </div>
         </div>
+
+        {/* Center HUD removed to save vertical space and prevent overlap */}
+
 
         {/* Bottom Toolbar */}
-        <div class="absolute bottom-2 left-0 right-0 flex flex-col items-center justify-center pointer-events-auto px-2 sm:bottom-6">
-          <div class="flex flex-row items-center gap-[clamp(0.5rem,3vw,1rem)] bg-black/60 backdrop-blur-sm rounded-full px-[clamp(0.6rem,4vw,1.5rem)] py-[clamp(0.4rem,3vw,0.9rem)]">
-            <Button
-              size="lg"
-              variant="ghost"
-              class="rounded-full w-[clamp(2.25rem,12vw,3rem)] h-[clamp(2.25rem,12vw,3rem)] p-0 text-white text-[clamp(0.9rem,4vw,1.2rem)]"
-              onClick={handlePrevious}
-            >
-              ◀
-            </Button>
-            
-            <Button
-              size="lg"
-              variant="ghost"
-              class="rounded-full w-[clamp(2.75rem,16vw,4rem)] h-[clamp(2.75rem,16vw,4rem)] p-0 text-[clamp(1.1rem,6vw,1.7rem)] text-white"
-              onClick={handlePause}
-            >
-              {sessionGetters.isActive() ? "⏸" : "▶"}
-            </Button>
-            
-            <Button
-              size="lg"
-              variant="ghost"
-              class="rounded-full w-[clamp(2.25rem,12vw,3rem)] h-[clamp(2.25rem,12vw,3rem)] p-0 text-white text-[clamp(0.9rem,4vw,1.2rem)]"
-              onClick={handleNext}
-            >
-              ▶
-            </Button>
-          </div>
+        <div class="absolute bottom-[clamp(1.5rem,6vw,2.5rem)] left-0 right-0 flex flex-col items-center justify-center pointer-events-auto px-2 pb-[env(safe-area-inset-bottom,0)]">
+          <div class="w-full max-w-[min(100%,48rem)] bg-black/75 backdrop-blur-md rounded-[clamp(1.2rem,6vw,2.5rem)] px-4 py-4 border border-white/5 shadow-2xl">
+            <div class="flex flex-col gap-[clamp(0.4rem,2.5vw,0.8rem)] items-center">
+              <Show when={currentStep()}>
+                {(step) => (
+                  <div class="flex flex-col items-center text-white w-full gap-1">
+                    <div class="flex items-center gap-3 text-[clamp(0.55rem,2.2vw,0.75rem)] uppercase tracking-wide text-white/60">
+                      <span>{step().type}</span>
+                      <Show when={step().setNumber}>
+                        <span class="w-1 h-1 rounded-full bg-white/20" />
+                        <span>Set {step().setNumber}/{step().totalSets}</span>
+                      </Show>
+                      <Show when={step().load}>
+                        <span class="w-1 h-1 rounded-full bg-white/20" />
+                        <span>{step().load}</span>
+                      </Show>
+                    </div>
+                    
+                    <div class="flex items-center justify-center gap-[clamp(0.4rem,3vw,1.5rem)] w-full">
+                      <div class="text-[clamp(0.95rem,4vw,1.3rem)] font-semibold truncate shrink min-w-0">
+                        {step().exerciseName || "Ready"}
+                      </div>
+                      
+                      <Show when={(step().tempo || step().repStructure) && sessionEngine}>
+                        <div class="flex items-baseline gap-1 bg-white/10 px-2.5 py-1 rounded-xl border border-white/10 shrink-0">
+                          <span class="text-[clamp(1.1rem,4.5vw,1.5rem)] font-bold tabular-nums text-primary">
+                            {currentRep()}
+                          </span>
+                          <Show when={step().totalReps}>
+                            <span class="text-[clamp(0.8rem,3.5vw,1.1rem)] text-white/40 font-medium">
+                              /{step().totalReps}
+                            </span>
+                          </Show>
+                          <span class="text-[clamp(0.5rem,2.2vw,0.65rem)] text-white/40 uppercase tracking-widest font-bold ml-1">
+                            REPS
+                          </span>
+                        </div>
+                      </Show>
+                    </div>
 
-          {/* Volume control */}
-          <div class="mt-[clamp(0.4rem,3vw,0.8rem)] flex items-center gap-[clamp(0.4rem,3vw,0.8rem)] text-white">
-            <Button
-              size="lg"
-              variant="ghost"
-              class="rounded-full w-[clamp(2rem,10vw,2.6rem)] h-[clamp(2rem,10vw,2.6rem)] p-0 text-white text-[clamp(0.8rem,3.5vw,1.1rem)]"
-              onClick={handleToggleVolumePanel}
-            >
-              {settingsStore.audio.masterVolume > 0 ? "🔊" : "🔇"}
-            </Button>
-            <Show when={showVolume()}>
-              <div class="flex items-center gap-[clamp(0.4rem,3vw,0.8rem)]">
-                <Button
-                  size="lg"
-                  variant="ghost"
-                  class="rounded-full w-[clamp(1.8rem,9vw,2.4rem)] h-[clamp(1.8rem,9vw,2.4rem)] p-0 text-white text-[clamp(0.7rem,3vw,1rem)]"
-                  onClick={handleToggleMute}
-                >
-                  {settingsStore.audio.masterVolume > 0 ? "Mute" : "Unmute"}
-                </Button>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                  value={settingsStore.audio.masterVolume ?? 0.5}
-                  onInput={handleMasterVolumeChange}
-                  class="w-[clamp(6rem,30vw,12rem)] accent-primary"
-                />
-                <div class="text-[clamp(0.6rem,2.5vw,0.85rem)] w-[clamp(2rem,8vw,3rem)] text-right">
-                  {Math.round((settingsStore.audio.masterVolume ?? 0.5) * 100)}%
-                </div>
+                    <Show when={nextStep()}>
+                      <div class="text-[clamp(0.55rem,2.2vw,0.75rem)] text-white/40 font-medium">
+                        NEXT: {nextStep()?.exerciseName || nextStep()?.type}
+                      </div>
+                    </Show>
+                  </div>
+                )}
+              </Show>
+
+              <div class="flex w-full items-center justify-center">
+                {/* Exercise + set tree toolbar section */}
               </div>
-            </Show>
-          </div>
 
-          {/* Step minimap */}
-          <div class="flex justify-center gap-[clamp(0.2rem,2vw,0.35rem)] mt-[clamp(0.4rem,3vw,0.8rem)]">
-            <Show when={sessionStore.currentSession}>
-              {(session) => (
-                <>
-                  {session().timeline.map((_, index) => (
-                    <div
-                      class={`w-[clamp(0.25rem,2.2vw,0.5rem)] h-[clamp(0.25rem,2.2vw,0.5rem)] rounded-full ${
-                        index === session().currentStepIndex
-                          ? "bg-primary"
-                          : index < session().currentStepIndex
-                          ? "bg-white"
-                          : "bg-gray-600"
-                      }`}
-                    />
-                  ))}
-                </>
-              )}
-            </Show>
+              {/* Exercise + set tree */}
+              <div class="w-full">
+                <Show when={sessionStore.currentSession && exerciseTree().exercises.length > 0}>
+                  <div class="flex items-center gap-[clamp(0.2rem,2vw,1rem)]">
+                    <Button
+                      variant="ghost"
+                      class="shrink-0 rounded-full w-[clamp(1.8rem,10vw,2.6rem)] h-[clamp(1.8rem,10vw,2.6rem)] p-0 text-white/40 hover:text-white text-[clamp(0.8rem,4vw,1.2rem)]"
+                      onClick={handlePrevious}
+                    >
+                      ◀
+                    </Button>
+
+                    <div 
+                      class="flex-1 flex flex-wrap justify-center gap-x-[clamp(0.4rem,3vw,1.2rem)] gap-y-[clamp(0.6rem,4vw,1rem)] px-1 mx-auto"
+                      style={{ "max-width": exerciseTree().exercises.length > 4 ? "min(100%, 36rem)" : "none" }}
+                    >
+                      {exerciseTree().exercises.map((exercise, exerciseIndex) => {
+                        const isCurrentExercise = exerciseIndex === exerciseTree().currentExerciseIndex;
+                        return (
+                          <div class="flex flex-col items-center gap-[clamp(0.2rem,2vw,0.4rem)] min-w-[clamp(4rem,15vw,6rem)]">
+                            <div class="flex flex-col items-center gap-[clamp(0.15rem,1.6vw,0.3rem)]">
+                              <div
+                                class={`flex items-center justify-center rounded-full border w-[clamp(1rem,6vw,1.6rem)] h-[clamp(1rem,6vw,1.6rem)] text-[clamp(0.5rem,2.6vw,0.8rem)] ${
+                                  isCurrentExercise
+                                    ? "bg-primary text-black border-primary"
+                                    : "bg-white/10 text-white/70 border-white/30"
+                                }`}
+                              >
+                                {exerciseIndex + 1}
+                              </div>
+                              <div
+                                class={`text-[clamp(0.45rem,2.2vw,0.7rem)] max-w-[clamp(3.5rem,15vw,6rem)] truncate text-center ${
+                                  isCurrentExercise ? "text-white" : "text-white/70"
+                                }`}
+                              >
+                                {exercise.name}
+                              </div>
+                            </div>
+                            <div class="w-px h-[clamp(0.35rem,2vw,0.6rem)] bg-white/20" />
+                            <div class="flex flex-wrap justify-center items-center gap-[clamp(0.2rem,2vw,0.35rem)]">
+                              {exercise.sets.map((set) => {
+                                const isCurrentSet = isCurrentExercise && exerciseTree().currentSetNumber === set.number;
+                                const isComplete = exerciseTree().currentStepIndex > set.stepIndex;
+                                const setStateClass = isCurrentSet
+                                  ? "bg-primary text-black border-primary"
+                                  : isComplete
+                                  ? "bg-white text-black border-white"
+                                  : "bg-white/10 text-white/60 border-white/20";
+                                return (
+                                  <div
+                                    class={`flex items-center justify-center rounded-full border w-[clamp(0.7rem,4.2vw,1.1rem)] h-[clamp(0.7rem,4.2vw,1.1rem)] text-[clamp(0.4rem,2vw,0.6rem)] ${setStateClass}`}
+                                  >
+                                    {set.number}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <Button
+                      variant="ghost"
+                      class="shrink-0 rounded-full w-[clamp(1.8rem,10vw,2.6rem)] h-[clamp(1.8rem,10vw,2.6rem)] p-0 text-white/40 hover:text-white text-[clamp(0.8rem,4vw,1.2rem)]"
+                      onClick={handleNext}
+                    >
+                      ▶
+                    </Button>
+                  </div>
+                </Show>
+
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Exit button */}
-        <Button
-          variant="ghost"
-          class="absolute top-2 right-2 text-white pointer-events-auto text-[clamp(0.65rem,2.5vw,0.85rem)] px-2 py-1"
-          onClick={handleExit}
-        >
-          Exit
-        </Button>
+        
       </div>
     </div>
     </>

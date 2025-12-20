@@ -5,69 +5,114 @@ import type { VoiceCue } from "../../types/session";
 export class VoiceCoach {
   private tts: TTSEngine;
   private cueQueue: Array<{ text: string; options?: TTSOptions }> = [];
-  private isSpeaking: boolean = false;
   private isEnabled: boolean = true;
   private queueVersion: number = 0;
   private masterVolume: number = 1;
+  private lastAnnouncedText: string = "";
+  private lastAnnouncedTime: number = 0;
+  private shortCueRegex = /^[A-Za-z]{1,4}$/;
 
-  constructor() {
-    this.tts = new TTSEngine();
+  constructor(tts?: TTSEngine) {
+    this.tts = tts ?? new TTSEngine();
     this.tts.init();
+  }
+
+  /**
+   * Unlock TTS with user gesture - MUST be called from click/touch handler
+   */
+  async unlock(): Promise<void> {
+    await this.tts.unlock();
   }
 
   async announce(cue: VoiceCue): Promise<void> {
     if (!this.isEnabled) return;
-
-    const options = this.applyMasterVolume(cue.options);
-    this.queueVersion += 1;
+    
+    const now = performance.now();
+    const timeSinceLastAnnounce = now - this.lastAnnouncedTime;
+    const isSpeaking = this.tts.isSpeaking();
+    // Don't cancel if actively speaking - let it finish naturally
+    // Only cancel if it's been too long (stale queue)
+    const shouldCancel = !isSpeaking && timeSinceLastAnnounce > 5000;
+    
+    console.log(`[VoiceCoach.announce] text="${cue.text}", isSpeaking=${isSpeaking}, timeSince=${timeSinceLastAnnounce.toFixed(0)}ms, shouldCancel=${shouldCancel}`);
+    
+    if (shouldCancel) {
+      // Cancel and reset queue
+      this.queueVersion += 1;
+      this.tts.cancel();
+      this.cueQueue = [];
+    }
+    
     const version = this.queueVersion;
-    this.cueQueue = [
-      {
-        text: cue.text,
-        options,
-      },
-    ];
-    this.tts.cancel();
-    this.isSpeaking = false;
-    await this.processQueue(version);
+    
+    this.lastAnnouncedText = cue.text;
+    this.lastAnnouncedTime = now;
+    
+    // Add to queue
+    this.cueQueue.push({
+      text: cue.text,
+      options: this.applyMasterVolume(cue.options),
+    });
+    
+    // Only start processing if not already processing
+    if (this.cueQueue.length === 1) {
+      await this.processQueue(version);
+    }
   }
 
   private async processQueue(version: number): Promise<void> {
     while (this.cueQueue.length > 0 && version === this.queueVersion) {
-      this.isSpeaking = true;
       const cue = this.cueQueue.shift()!;
       
+      const speakText = this.extendShortCue(cue.text);
+      
+      console.log(`[VoiceCoach.processQueue] Speaking: "${speakText}"`);
+      
+      // Wait for any currently speaking utterance to finish
+      while (this.tts.isSpeaking()) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      
       try {
-        await this.tts.speak(cue.text, cue.options);
+        await this.tts.speak(speakText, cue.options);
+        console.log(`[VoiceCoach.processQueue] Finished: "${cue.text}"`);
       } catch (error) {
         console.error("Voice cue failed:", error);
       }
 
-      // Small delay between cues
-      await new Promise(resolve => setTimeout(resolve, 50));
+      const postDelayMs = 100;
+      await new Promise(resolve => setTimeout(resolve, postDelayMs));
+      this.tts.resetIfIdle();
     }
-    this.isSpeaking = false;
   }
 
-  async announceTempo(phase: string): Promise<void> {
+  async announceTempo(phase: string, rep?: number): Promise<void> {
     if (!this.isEnabled) return;
 
     const options: Record<string, TTSOptions> = {
-      eccentric: { rate: 0.8, pitch: 0.9, volume: 0.8 },   // Down: Slower, lower
-      concentric: { rate: 1.2, pitch: 1.1, volume: 0.8 },  // Up: Faster, higher
-      hold: { rate: 0.8, pitch: 1.0, volume: 0.7 },        // Hold
-      rest: { rate: 1.0, pitch: 1.0, volume: 0.7 },
+      eccentric: { rate: 1.0, pitch: 1.0, volume: 1.0 },
+      concentric: { rate: 1.0, pitch: 1.0, volume: 1.0 },
+      hold: { rate: 1.0, pitch: 1.0, volume: 1.0 },
+      rest: { rate: 1.0, pitch: 1.0, volume: 1.0 },
     };
 
     const textMap: Record<string, string> = {
         eccentric: "Down",
-        concentric: "Up",
+        concentric: "Lift",
         hold: "Hold",
         rest: "Rest"
     };
 
-    const text = textMap[phase] || phase;
+    let text = textMap[phase] || phase;
+    
+    // Replace "Down" with the rep number if provided
+    if (phase === "eccentric" && rep !== undefined) {
+      text = `${rep}`;
+    }
+
     const opts = options[phase] || { rate: 1.0 };
+
+    console.log(`[VoiceCoach] announceTempo: phase=${phase}, rep=${rep}, text="${text}"`);
 
     await this.announce({
       text,
@@ -109,7 +154,7 @@ export class VoiceCoach {
   }
 
   async announceRep(current: number, total?: number): Promise<void> {
-    const text = `${current}`;
+    const text = total ? `${current} of ${total}` : `${current}`;
     await this.announce({
       text,
       time: 0,
@@ -144,7 +189,6 @@ export class VoiceCoach {
     this.queueVersion += 1;
     this.cueQueue = [];
     this.tts.cancel();
-    this.isSpeaking = false;
   }
 
   pause(): void {
@@ -165,6 +209,19 @@ export class VoiceCoach {
     }
     const baseVolume = options.volume ?? 1;
     return { ...options, volume: Math.max(0, Math.min(1, baseVolume * this.masterVolume)) };
+  }
+
+  private isShortWord(text: string): boolean {
+    const normalized = text.trim().replace(/[!?.]+$/g, "");
+    return this.shortCueRegex.test(normalized);
+  }
+
+  private extendShortCue(text: string): string {
+    if (!this.isShortWord(text)) {
+      return text;
+    }
+    const normalized = text.trim().replace(/[!?.]+$/g, "");
+    return `${normalized}...`;
   }
 }
 

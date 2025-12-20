@@ -1,31 +1,44 @@
-import { IntervalTimer } from "./timer/IntervalTimer";
-import { TempoEngine, type TempoEvent } from "./timer/TempoEngine";
+import { UnifiedTimingEngine, type TimingEvent } from "./timer/UnifiedTimingEngine";
 import type { GuidedSession, SessionStep } from "../types/session";
 import { sessionActions } from "../stores/sessionStore";
 
-type EventType = "tick" | "stepChange" | "statusChange" | "cue" | "completed";
+type EventType = "tick" | "stepChange" | "statusChange" | "cue" | "completed" | "visualState";
 type EventHandler = (data: any) => void;
 
+export interface VisualState {
+  phase: string;
+  rep: number;
+  progress: number;
+  holdAnchor: number; // -1 for bottom, 1 for top
+  lastMovementPhase: string; // "up" or "down"
+}
+
 export class SessionEngine {
-  private session: GuidedSession; // This is a reference to the store proxy
-  private timer: IntervalTimer; // For duration-based steps
-  private tempoEngine: TempoEngine | null = null;
-  private tempoTargetReps: number = 0;
-  private lastTempoRep: number = 0;
+  private session: GuidedSession;
+  private timingEngine: UnifiedTimingEngine | null = null;
+  private updateLoop: number | null = null;
   private listeners: Record<EventType, EventHandler[]> = {
     tick: [],
     stepChange: [],
     statusChange: [],
     cue: [],
     completed: [],
+    visualState: [],
   };
 
-  private tempoUpdateLoop: number | null = null;
   private triggeredCues = new Set<number>();
+  
+  // Visual state tracking (for WebGL rendering)
+  private visualState: VisualState = {
+    phase: "down",
+    rep: 0,
+    progress: 0,
+    holdAnchor: 1,
+    lastMovementPhase: "down",
+  };
 
   constructor(session: GuidedSession) {
     this.session = session;
-    this.timer = new IntervalTimer("countup"); 
   }
 
   // Event Bus implementation
@@ -48,205 +61,241 @@ export class SessionEngine {
 
   // Control Flow
   start() {
-    console.log("SessionEngine: Start called");
+    console.log("[SessionEngine] Start called");
     sessionActions.startSession();
     this.emit("statusChange", "active");
     this.startStep();
   }
 
   pause() {
-    console.log("SessionEngine: Pause called");
+    console.log("[SessionEngine] Pause called");
     if (this.session.state !== "active") return;
     sessionActions.pauseSession();
-    this.timer.pause(); 
-    this.stopTempoLoop();
+    this.timingEngine?.pause();
+    this.stopUpdateLoop();
     this.emit("statusChange", "paused");
   }
 
   resume() {
-    console.log("SessionEngine: Resume called");
+    console.log("[SessionEngine] Resume called");
     if (this.session.state !== "paused") return;
     sessionActions.resumeSession();
     this.emit("statusChange", "active");
-
-    const currentStep = this.getCurrentStep();
-    if (currentStep) {
-        const tempoReps = currentStep.exercise?.reps ?? currentStep.totalReps ?? 0;
-        if (currentStep.type === "work" && currentStep.repStructure && currentStep.repStructure.length > 0 && tempoReps > 0) {
-            // Emit current phase cue on resume to re-orient user
-            if (this.tempoEngine) {
-                 const currentPhase = this.tempoEngine.getCurrentPhase();
-                 this.emit("cue", { type: "tempo", phase: currentPhase.type });
-            }
-            this.startTempoLoop();
-        } else {
-            console.log("SessionEngine: Resuming timer");
-            this.timer.resume(
-                (elapsed, remaining) => this.onTick(elapsed, remaining),
-                () => this.next()
-            );
-        }
+    
+    if (this.timingEngine) {
+      this.timingEngine.resume();
+      
+      // Emit current state cue on resume to re-orient user
+      const tempo = this.timingEngine.getCurrentTempo();
+      if (tempo) {
+        this.emit("cue", { type: "tempo", phase: tempo.phase, rep: tempo.rep });
+      }
+      
+      this.startUpdateLoop();
     }
   }
 
   stop() {
-    console.log("SessionEngine: Stop called");
-    this.timer.stop();
-    this.stopTempoLoop();
-    sessionActions.endSession(); // Or define a stop action? endSession clears it.
-    // Maybe just set state to idle?
-    // sessionActions.pauseSession();
+    console.log("[SessionEngine] Stop called");
+    this.stopUpdateLoop();
+    this.timingEngine?.stop();
+    sessionActions.endSession();
     this.emit("statusChange", "idle");
   }
 
-  // Skip to next EXERCISE (skips rests)
   skipExercise() {
-     sessionActions.skipExercise();
-     // We need to restart step processing for the new step
-     this.startStep();
+    sessionActions.skipExercise();
+    this.startStep();
   }
 
   private getCurrentStep(): SessionStep | undefined {
-    // Always read from the session reference, which is the store proxy.
-    // Solid proxies should give fresh values.
     return this.session.timeline[this.session.currentStepIndex];
   }
 
   private startStep() {
-    // IMPORTANT: getCurrentStep() reads from the session store proxy.
-    // When next() calls sessionActions.nextStep(), the store updates.
-    // We assume this.session.currentStepIndex reflects that change immediately 
-    // because standard JS references to proxies usually work that way in the same tick 
-    // if action was synchronous? Yes, Solid stores are synchronous.
-    
     const step = this.getCurrentStep();
     if (!step) {
-      console.log("SessionEngine: No more steps, completing");
+      console.log("[SessionEngine] No more steps, completing");
       this.complete();
       return;
     }
     
-    console.log("SessionEngine: Starting step", this.session.currentStepIndex, step.type, step.exerciseName);
+    console.log(`[SessionEngine] Starting step ${this.session.currentStepIndex}: ${step.type} - ${step.exerciseName || 'N/A'}`);
 
     this.triggeredCues.clear();
     this.emit("stepChange", step);
 
     // Emit first cue if time == 0
     if (step.voiceCues && step.voiceCues.length > 0) {
-        if (step.voiceCues[0].time === 0) {
-            this.emit("cue", step.voiceCues[0]);
-            this.triggeredCues.add(0);
-        }
+      if (step.voiceCues[0].time === 0) {
+        this.emit("cue", step.voiceCues[0]);
+        this.triggeredCues.add(0);
+      }
     }
 
+    // Determine timing mode
     const tempoReps = step.exercise?.reps ?? step.totalReps ?? 0;
-    if (step.type === "work" && step.repStructure && step.repStructure.length > 0 && tempoReps > 0) {
-      // Tempo based
-      this.timer.stop(); 
-      this.tempoTargetReps = tempoReps;
-      this.tempoEngine = new TempoEngine(step.repStructure, this.tempoTargetReps);
-      this.tempoEngine.start();
-      this.lastTempoRep = 1;
-      // Emit initial cue for the first phase
-      const initialPhase = this.tempoEngine.getCurrentPhase();
-      this.emit("cue", { type: "tempo", phase: initialPhase.type });
-      
-      this.startTempoLoop();
+    const hasTempoStructure = step.type === "work" && step.repStructure && step.repStructure.length > 0 && tempoReps > 0;
 
+    if (hasTempoStructure) {
+      // Tempo-based timing
+      console.log(`[SessionEngine] Using tempo mode: ${tempoReps} reps`);
+      this.timingEngine = new UnifiedTimingEngine({
+        mode: "tempo",
+        phases: step.repStructure!,
+        targetReps: tempoReps,
+      });
+      
+      // Initialize visual state
+      this.visualState = {
+        phase: step.repStructure![0].type,
+        rep: 1,
+        progress: 0,
+        holdAnchor: 1,
+        lastMovementPhase: "down",
+      };
+      
     } else {
-      // Time based
-      this.stopTempoLoop();
-      // Reset timer for new step
-      // duration > 0 ? countdown : countup.
-      // If duration is 0, it's effectively a manual step or instant?
-      // If duration is 0, we shouldn't auto-complete immediately unless we want to skip it?
-      // Usually steps have duration. Setup steps might have 5s.
+      // Duration-based timing
+      const duration = step.duration || 0;
+      console.log(`[SessionEngine] Using duration mode: ${duration}s`);
+      this.timingEngine = new UnifiedTimingEngine({
+        mode: "duration",
+        duration,
+        countdown: duration > 0,
+      });
+    }
+
+    this.timingEngine.start();
+    
+    // Emit initial cue for tempo mode
+    if (hasTempoStructure) {
+      const initialPhase = step.repStructure![0].type;
+      this.emit("cue", { type: "tempo", phase: initialPhase, rep: 1 });
+    }
+    
+    this.startUpdateLoop();
+  }
+
+  private startUpdateLoop() {
+    if (this.updateLoop) clearInterval(this.updateLoop);
+    
+    let lastTime = performance.now();
+    this.updateLoop = window.setInterval(() => {
+      if (this.session.state !== "active" || !this.timingEngine) return;
       
-      const isCountdown = step.duration > 0;
-      this.timer = new IntervalTimer(isCountdown ? "countdown" : "countup", step.duration);
+      const now = performance.now();
+      const dt = (now - lastTime) / 1000;
+      lastTime = now;
       
-      this.timer.start(
-        (elapsed, remaining) => this.onTick(elapsed, remaining),
-        () => {
-            console.log("SessionEngine: Step timer complete");
-            this.next();
-        } 
+      // Get all events from timing engine
+      const events = this.timingEngine.update(dt);
+      
+      // Process events
+      events.forEach(event => this.handleTimingEvent(event));
+      
+      // Update global elapsed time
+      const globalElapsed = Math.floor(
+        (Date.now() - this.session.startTime - (this.session.pausedTime || 0)) / 1000
       );
+      sessionActions.updateElapsedTime(globalElapsed);
+      
+    }, 16); // ~60fps
+  }
+
+  private handleTimingEvent(event: TimingEvent) {
+    switch (event.type) {
+      case "tick":
+        // Forward tick event with all data
+        this.emit("tick", {
+          elapsed: event.elapsed,
+          remaining: event.remaining,
+          tempo: event.tempo,
+        });
+        
+        // Update visual state if tempo data present
+        if (event.tempo) {
+          this.updateVisualState(event.tempo.phase, event.tempo.rep, event.tempo.progress);
+        }
+        
+        // Check for time-based voice cues
+        this.checkVoiceCues(event.elapsed || 0);
+        break;
+        
+      case "cue":
+        // Forward cue event
+        if (event.cue) {
+          console.log(`[SessionEngine] Forwarding cue:`, event.cue);
+          this.emit("cue", event.cue);
+        }
+        break;
+        
+      case "phaseChange":
+        // Phase changed - update visual state
+        if (event.tempo) {
+          this.updateVisualState(event.tempo.phase, event.tempo.rep, event.tempo.progress);
+        }
+        break;
+        
+      case "complete":
+        // Step complete - advance to next
+        console.log("[SessionEngine] Step complete, advancing");
+        this.next();
+        break;
     }
   }
 
-  private startTempoLoop() {
-      if (this.tempoUpdateLoop) clearInterval(this.tempoUpdateLoop);
-      
-      let lastTime = performance.now();
-      this.tempoUpdateLoop = window.setInterval(() => {
-          if (this.session.state !== "active") return;
-          
-          const now = performance.now();
-          const dt = (now - lastTime) / 1000;
-          lastTime = now;
-          
-          if (this.tempoEngine) {
-              const event = this.tempoEngine.update(dt, (e: TempoEvent) => {
-                  if (e.rep !== this.lastTempoRep && e.rep <= this.tempoTargetReps) {
-                      this.lastTempoRep = e.rep;
-                  }
-                  this.emit("cue", { type: "tempo", phase: e.phase }); // Let voice coach handle formatting
-                  if ((e.phase === "concentric" || e.phase === "up") && e.rep <= this.tempoTargetReps) {
-                      this.emit("cue", { type: "rep", rep: e.rep, totalReps: this.tempoTargetReps, delayMs: 300 });
-                  }
-                  
-                  if (this.tempoEngine?.isComplete()) {
-                      console.log("SessionEngine: Tempo complete");
-                      this.stopTempoLoop();
-                      this.next();
-                  }
-              });
-              
-              this.emit("tick", {
-                  stepElapsed: this.tempoEngine.getElapsed(),
-                  tempo: event,
-              });
-          }
-      }, 16);
+  private updateVisualState(phase: string, rep: number, progress: number) {
+    let nextMovementPhase = this.visualState.lastMovementPhase;
+    
+    if (phase === "eccentric" || phase === "down") {
+      nextMovementPhase = "down";
+    } else if (phase === "concentric" || phase === "up") {
+      nextMovementPhase = "up";
+    } else if (phase === "hold") {
+      // Hold anchor depends on previous movement
+      this.visualState.holdAnchor = nextMovementPhase === "down" ? -1 : 1;
+    }
+    
+    this.visualState = {
+      phase,
+      rep,
+      progress,
+      holdAnchor: this.visualState.holdAnchor,
+      lastMovementPhase: nextMovementPhase,
+    };
+    
+    // Emit visual state update for WebGL
+    this.emit("visualState", this.visualState);
   }
 
-  private stopTempoLoop() {
-      if (this.tempoUpdateLoop) {
-          clearInterval(this.tempoUpdateLoop);
-          this.tempoUpdateLoop = null;
+  private checkVoiceCues(elapsed: number) {
+    const step = this.getCurrentStep();
+    if (!step || !step.voiceCues) return;
+
+    step.voiceCues.forEach((cue, index) => {
+      if (elapsed >= cue.time && !this.triggeredCues.has(index)) {
+        this.triggeredCues.add(index);
+        this.emit("cue", cue);
       }
+    });
   }
 
-  private onTick(elapsed: number, remaining?: number) {
-      const step = this.getCurrentStep();
-      if (!step) return;
-
-      // Check voice cues
-      if (step.voiceCues) {
-          step.voiceCues.forEach((cue, index) => {
-              if (elapsed >= cue.time && !this.triggeredCues.has(index)) {
-                  this.triggeredCues.add(index);
-                  this.emit("cue", cue);
-              }
-          });
-      }
-
-      this.emit("tick", { elapsed, remaining });
+  private stopUpdateLoop() {
+    if (this.updateLoop) {
+      clearInterval(this.updateLoop);
+      this.updateLoop = null;
+    }
   }
 
   next() {
-    this.stopTempoLoop();
-    this.timer.stop(); // Stop current step timer
+    this.stopUpdateLoop();
+    this.timingEngine?.stop();
     
     const currentIndex = this.session.currentStepIndex;
     if (currentIndex < this.session.timeline.length - 1) {
-      console.log("SessionEngine: Advancing to next step");
-      sessionActions.nextStep(); // Mutate store
-      // Wait? Solid store update is synchronous.
-      // So this.session.currentStepIndex should likely be updated by the time we run next line?
-      // But let's verify.
-      
+      console.log("[SessionEngine] Advancing to next step");
+      sessionActions.nextStep();
       this.startStep();
     } else {
       this.complete();
@@ -254,26 +303,28 @@ export class SessionEngine {
   }
 
   previous() {
-    this.stopTempoLoop();
-    this.timer.stop();
+    this.stopUpdateLoop();
+    this.timingEngine?.stop();
     
     if (this.session.currentStepIndex > 0) {
-        sessionActions.previousStep();
-        this.startStep();
+      sessionActions.previousStep();
+      this.startStep();
     } else {
-        // Just restart current?
-        // sessionActions.previousStep() checks boundary.
-        this.startStep();
+      this.startStep();
     }
   }
 
   complete() {
-      sessionActions.completeSession();
-      this.emit("completed", {});
+    this.stopUpdateLoop();
+    sessionActions.completeSession();
+    this.emit("completed", {});
   }
 
-  // Getters for UI sync (if needed, though events should drive state)
   getSession() {
-      return this.session;
+    return this.session;
+  }
+  
+  getVisualState(): VisualState {
+    return this.visualState;
   }
 }

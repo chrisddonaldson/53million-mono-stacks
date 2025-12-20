@@ -9,6 +9,7 @@ export class WebGLEngine {
     tempoPhase: WebGLUniformLocation | null;
     phaseColor: WebGLUniformLocation | null;
     phaseType: WebGLUniformLocation | null;
+    holdAnchor: WebGLUniformLocation | null;
     resolution: WebGLUniformLocation | null;
   } = {
     time: null,
@@ -16,6 +17,7 @@ export class WebGLEngine {
     tempoPhase: null,
     phaseColor: null,
     phaseType: null,
+    holdAnchor: null,
     resolution: null,
   };
   private animationFrameId: number | null = null;
@@ -71,6 +73,7 @@ export class WebGLEngine {
     this.uniformLocations.tempoPhase = this.gl.getUniformLocation(this.program, 'u_tempo_phase');
     this.uniformLocations.phaseColor = this.gl.getUniformLocation(this.program, 'u_phase_color');
     this.uniformLocations.phaseType = this.gl.getUniformLocation(this.program, 'u_phase_type');
+    this.uniformLocations.holdAnchor = this.gl.getUniformLocation(this.program, 'u_hold_anchor');
     this.uniformLocations.resolution = this.gl.getUniformLocation(this.program, 'u_resolution');
 
     // Create fullscreen quad
@@ -111,6 +114,9 @@ export class WebGLEngine {
     return shader;
   }
 
+  private currentPhaseColor: [number, number, number] = [0.5, 0.5, 0.5];
+  private targetPhaseColor: [number, number, number] = [0.5, 0.5, 0.5];
+
   render(uniforms: RenderUniforms): void {
     if (!this.gl || !this.program) return;
 
@@ -119,6 +125,16 @@ export class WebGLEngine {
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
     this.gl.useProgram(this.program);
+
+    // Update target color
+    this.targetPhaseColor = uniforms.phaseColor;
+
+    // Smoothly interpolate current color towards target
+    // Using a simple lerp for performance and visual consistency
+    const lerpFactor = 0.15; 
+    this.currentPhaseColor[0] += (this.targetPhaseColor[0] - this.currentPhaseColor[0]) * lerpFactor;
+    this.currentPhaseColor[1] += (this.targetPhaseColor[1] - this.currentPhaseColor[1]) * lerpFactor;
+    this.currentPhaseColor[2] += (this.targetPhaseColor[2] - this.currentPhaseColor[2]) * lerpFactor;
 
     // Update uniforms
     if (this.uniformLocations.time) {
@@ -133,13 +149,16 @@ export class WebGLEngine {
     if (this.uniformLocations.phaseColor) {
       this.gl.uniform3f(
         this.uniformLocations.phaseColor,
-        uniforms.phaseColor[0],
-        uniforms.phaseColor[1],
-        uniforms.phaseColor[2]
+        this.currentPhaseColor[0],
+        this.currentPhaseColor[1],
+        this.currentPhaseColor[2]
       );
     }
     if (this.uniformLocations.phaseType) {
       this.gl.uniform1f(this.uniformLocations.phaseType, uniforms.phaseType);
+    }
+    if (this.uniformLocations.holdAnchor) {
+      this.gl.uniform1f(this.uniformLocations.holdAnchor, uniforms.holdAnchor);
     }
     if (this.uniformLocations.resolution) {
       this.gl.uniform2f(this.uniformLocations.resolution, this.gl.canvas.width, this.gl.canvas.height);
