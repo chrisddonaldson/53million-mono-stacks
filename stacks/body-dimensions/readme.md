@@ -1,105 +1,99 @@
-## Product scope
+# Body Dimensions Stack (MongoDB + Koa + SolidJS)
 
-### Core measurements (MVP)
+## Executive Summary
 
-Track entries over time for:
+This repository implements a **private, single-user body measurement tracking system**. It is designed to run as a self-contained stack in a homelab environment.
 
-* **Height** (cm)
-* **Body weight** (kg)
-* **Body fat %** (percent)
-* **Skinfold / body fat mm** (mm) — support multiple sites (e.g., abdomen, thigh)
+The system allows you to:
+- Track core metrics: **Height**, **Body Weight**, and **Body Fat %**.
+- Log detailed **Skinfold Measurements** (mm) across multiple sites.
+- View progress via historical lists and trend overviews.
+- Maintain full ownership of your data in a local MongoDB database.
 
-### Key user flows
-
-* Add a measurement entry (single date, many fields)
-* View history as list + simple charts
-* Edit/delete an entry
-* “Latest stats” overview
-* Optional: import/export CSV (nice-to-have)
+The system is intentionally:
+- **Single-user**: No complex authentication or multi-tenancy.
+- **Self-hosted**: Entirely containerized via Docker Compose.
+- **Private**: Network isolation is the security boundary.
 
 ---
 
-## Data model (Postgres)
+## High-Level Architecture
 
-### Entities
+```
+[ Web Browser ]
+      |
+      | HTTP / JSON
+      v
+[ Node.js API (Koa) ]
+      |
+      | Document Store (Mongoose / MongoDB)
+      v
+[ MongoDB Database ]
+```
 
-**users**
-
-* `id` (uuid, pk)
-* `email` (text, unique)
-* `password_hash` (text) *(if doing local auth)*
-* `created_at`, `updated_at`
-
-**measurement_entries**
-
-* `id` (uuid, pk)
-* `user_id` (uuid, fk -> users.id)
-* `measured_at` (timestamptz, default now) *(the date of measurement)*
-* `height_cm` (numeric(5,2), nullable)
-* `weight_kg` (numeric(6,2), nullable)
-* `body_fat_percent` (numeric(5,2), nullable)
-* `notes` (text, nullable)
-* `created_at`, `updated_at`
-* indexes: `(user_id, measured_at desc)`
-
-**skinfold_measurements**
-
-* `id` (uuid, pk)
-* `entry_id` (uuid, fk -> measurement_entries.id on delete cascade)
-* `site` (text) *(enum-like: abdomen, thigh, chest, suprailiac, etc.)*
-* `mm` (numeric(5,2))
-* unique constraint: `(entry_id, site)`
-
-**Optional** (if you want calculated BF from skinfolds later):
-
-* `calculation_method` on entry (text) + store derived values separately
-
-### Constraints / validation
-
-* Height: 50–300 cm
-* Weight: 20–500 kg
-* BF%: 1–75
-* Skinfold mm: 0–100 (or 0–150 depending on calipers)
+### Network Scope
+- Everything runs **inside a private LAN or VPN**.
+- The **Web UI** and **API** are accessible on their respective ports.
+- The **Database** is internal to the Docker network.
+- **No authentication** is implemented at the application layer; access is controlled via network security.
 
 ---
 
-## API stack (Koa + TS)
+## Core Components
 
-### Tech choices
+### 1. Web Frontend (SolidJS + Vite)
+- **Role**: Premium user interface for data entry and visualization.
+- **Features**:
+  - **Dashboard**: "Latest stats" at a glance and quick-add entry point.
+  - **Entry Form**: Specialized inputs for weights, percentages, skinfold rows, and limb circumferences.
+  - **History**: Sortable table of all past measurements.
+  - **Reports**: Dedicated views for daily and weekly trend analysis, providing a breakdown of progress over time.
+  - **Trends**: Visual indicators of changes over 7 and 30 days.
 
-* Koa, koa-router
-* zod (request validation)
-* postgres driver: `pg` + query builder (Kysely) or Prisma
-* auth: JWT (access token) + refresh token OR session cookies
+### 2. Node.js API (Koa + TypeScript)
+- **Role**: Handles business logic and serves as the gateway to the database.
+- **Responsibilities**:
+  - Validates incoming measurement data using **Zod**.
+  - Provides trend calculations (deltas) for the frontend.
+  - Manages CRUD operations for entries and nested skinfold records.
+  - Centralized error handling and standardized JSON responses.
 
-### API endpoints (MVP)
+### 3. Database (MongoDB)
+- **Role**: Flexible document storage.
+- **Schema**:
+  - `Entries`: A single collection where each document contains all measurements (core, skinfolds, and circumferences) for a specific point in time.
 
-**Auth**
+---
 
-* `POST /auth/register`
-* `POST /auth/login`
-* `POST /auth/logout`
-* `GET /me` (current user)
+## Product Scope
 
-**Measurements**
+### Core Measurements
+- **Height** (cm)
+- **Body Weight** (kg)
+- **Body Fat %** (percent)
+- **Skinfolds** (mm) — Multiple sites (e.g., Abdomen, Thigh, Chest, Suprailiac)
+- **Circumferences** (cm) — Multiple sites (e.g., Neck, Shoulders, Chest, Upper Arm, Forearm, Waist, Hips, Thigh, Calf)
 
-* `GET /entries?from=...&to=...&limit=...`
-* `GET /entries/latest`
-* `POST /entries`
-* `PATCH /entries/:id`
-* `DELETE /entries/:id`
+### Key User Flows
+- **Log Entry**: Add a new snapshot with any subset of fields.
+- **Trend Snapshot**: See "Latest stats" with automatic deltas (e.g., -0.8kg in 7 days).
+- **Daily/Weekly Reports**: Review detailed progress reports segmented by day and week to identify cycles and long-term trends.
+- **Review History**: Scroll through past entries to see progress.
+- **Manage Data**: Edit or delete incorrect entries.
 
-**SkinfoId**
+---
 
-* included in entry payload, or separate:
+## API Contract
 
-  * `PUT /entries/:id/skinfolds` (replace set)
-  * `PATCH /entries/:id/skinfolds` (partial)
+### Measurements
+- `GET /entries?from=...&to=...&limit=...` - List historical entries.
+- `GET /entries/latest` - Returns the most recent entry + calculated trends.
+- `GET /reports/trends?period=daily|weekly` - Specific reporting data for trend analysis.
+- `POST /entries` - Create a new entry.
+- `PATCH /entries/:id` - Update existing entry data.
+- `DELETE /entries/:id` - Remove an entry.
 
-### Request/response shapes
-
-**POST /entries**
-
+### Request Shape (Example `POST /entries`)
 ```json
 {
   "measuredAt": "2026-01-02T08:00:00.000Z",
@@ -110,198 +104,83 @@ Track entries over time for:
     { "site": "abdomen", "mm": 29 },
     { "site": "thigh", "mm": 25 }
   ],
+  "circumferences": [
+    { "site": "neck", "cm": 42.5 },
+    { "site": "chest", "cm": 115.0 },
+    { "site": "upper_arm_left", "cm": 40.0 }
+  ],
   "notes": "Fasted AM"
 }
 ```
 
-**GET /entries/latest**
+---
 
+## Data Model (MongoDB Schema)
+
+### `Entries` collection
 ```json
 {
-  "entry": { "...": "..." },
-  "trends": {
-    "weightKg": { "delta7d": -0.8, "delta30d": -1.9 },
-    "bodyFatPercent": { "delta30d": -0.6 }
-  }
+  "_id": "ObjectId",
+  "measuredAt": "ISODate",
+  "heightCm": "Number",
+  "weightKg": "Number",
+  "bodyFatPercent": "Number",
+  "skinfolds": [
+    { "site": "String", "mm": "Number" }
+  ],
+  "circumferences": [
+    { "site": "String", "cm": "Number" }
+  ],
+  "notes": "String",
+  "createdAt": "ISODate",
+  "updatedAt": "ISODate"
 }
 ```
 
-### Non-functional requirements
+---
 
-* All endpoints scoped to authenticated `user_id`
-* Rate limit auth endpoints
-* Centralized error handling (400 validation, 401 auth, 404, 500)
-* OpenAPI spec output (optional but valuable)
+## Configuration Model
+
+All configuration is environment-variable driven.
+
+### API
+- `DATABASE_URL`: Connection string for MongoDB (e.g., `mongodb://db:27107/body-dimensions`).
+- `PORT`: API binding port (default 3000).
+- `CORS_ORIGIN`: Allowed frontend origin.
+
+### Web
+- `VITE_API_URL`: Backend API endpoint.
 
 ---
 
-## Web stack (SolidJS + Vite)
+## Deployment Model (Docker Compose)
 
-### Pages
+The entire stack is managed as a single unit via Docker Compose.
 
-* **Login/Register**
-* **Dashboard**
-
-  * latest height/weight/BF%
-  * “last measured” date
-  * quick add button
-* **Add/Edit Entry**
-
-  * date/time
-  * height/weight/BF%
-  * skinfold rows (site dropdown + mm)
-* **History**
-
-  * table view (sortable)
-  * charts for weight and BF% (optional MVP+)
-* **Settings**
-
-  * units (kg/lb toggle later, cm/in later)
-  * export CSV (optional)
-
-### UI components
-
-* Measurement card (latest values)
-* Entry form (with validation + inline errors)
-* Skinfold list editor (add/remove row)
-* History table
-* Basic chart component (MVP+: uPlot / Chart.js / ECharts)
-
----
-
-## Repo structure (TurboRepo monorepo)
-
-```
-repo/
-  apps/
-    api/          # koa node typescript API backend (stack)
-    web/          # solidjs vite frontend (stack)
-  stacks/
-    db/           # postgres schema + migrations (stack)
-  packages/
-    shared/       # shared types (zod schemas, TS types)
-    eslint-config/
-    tsconfig/
-  turbo.json
-  package.json
+### Quick Start
+```bash
+docker compose up -d --build
 ```
 
-### Why “stacks/” for DB?
-
-Because it’s deployed as infrastructure and referenced by the deploy system. Keeping it distinct avoids pretending it’s an “app”.
-
----
-
-## DB stack (migrations + local dev)
-
-### Contents
-
-```
-stacks/db/
-  migrations/
-  schema.sql (optional)
-  docker-compose.yml (dev only)
-  README.md
-```
-
-### Migrations
-
-Pick one:
-
-* `node-pg-migrate`
-* `drizzle-kit`
-* `prisma migrate`
-
-If you want the cleanest API+db coupling, **Drizzle** or **Prisma** is easiest. If you want minimal dependencies, `node-pg-migrate` is great.
+### Included Services
+- `api`: Node.js backend.
+- `web`: SolidJS frontend (served via Nginx).
+- `db`: MongoDB 7.0 instance.
 
 ---
 
-## “Stack” contract for deploy integration
+## Design Philosophy
 
-Each stack should expose:
+This project optimizes for **Data Autonomy** and **Simplicity**.
 
-* how it builds
-* how it runs
-* env vars it needs
-* health checks
-
-### Example env vars
-
-**api**
-
-* `DATABASE_URL`
-* `JWT_SECRET`
-* `CORS_ORIGIN`
-* `PORT`
-
-**web**
-
-* `VITE_API_URL`
-
-**db**
-
-* `POSTGRES_DB`
-* `POSTGRES_USER`
-* `POSTGRES_PASSWORD`
+- **No Placeholders**: Every feature in the scope is intended for real use.
+- **Flexible Schema**: Document-oriented storage allowing for easy addition of new measurement sites without migrations.
+- **Single Command**: One `docker compose up` should result in a fully functional, production-ready private service.
 
 ---
 
-## TurboRepo scripts (root package.json)
-
-Suggested scripts:
-
-* `turbo dev` → runs web + api + db (db via compose)
-* `turbo build` → builds api + web
-* `turbo lint` / `turbo test`
-* `turbo migrate` → runs db migrations
-* `turbo typecheck`
-
-`turbo.json` pipeline idea:
-
-* `build` depends on `^build`
-* `dev` is persistent
-* `migrate` is not cached
-* `lint/typecheck` cached
-
----
-
-## Shared types package (recommended)
-
-Put shared validation/types in `packages/shared`:
-
-* `EntrySchema` (zod)
-* `SkinfoldSchema`
-* TS types inferred from zod
-* used by both API and Web so you never drift
-
----
-
-## MVP acceptance criteria
-
-1. User can register/login
-2. User can create an entry with any subset of:
-
-   * height, weight, BF%, skinfolds
-3. User can view history and latest entry
-4. User can edit/delete an entry
-5. Data persists in Postgres
-6. Repo is TurboRepo with `api`, `web`, `db` stacks and one-command dev
-
----
-
-## Good “next” features (post-MVP)
-
-* Unit conversion (kg/lb, cm/in)
-* Calculated BF% from skinfold method selection (Jackson-Pollock 3-site etc.)
-* Photo upload per entry (progress pics)
-* Reminders + streaks
-* Trend lines + moving averages
-* Export to CSV + Apple Health/Google Fit (later)
-
----
-
-If you want, I can turn this into:
-
-* a **README-level spec** (PRD + technical design),
-* a **Jira epic with stories** (API, DB, Web),
-* and a **concrete folder skeleton** (file tree + key config snippets) you can paste straight into your repo.
+## Future Evolution (Post-MVP)
+- **Calculated BF%**: Automated formulas based on skinfold entries.
+- **Data Portability**: Export/Import via CSV.
+- **Visuals**: Charts for weight and body fat trends.
+- **Photos**: Progress picture attachments per entry.
