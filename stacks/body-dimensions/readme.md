@@ -9,6 +9,7 @@ The system allows you to:
 - Log detailed **Skinfold Measurements** (mm) across multiple sites.
 - Support **high-frequency logging** (multiple entries per day) with **partial data** (e.g., logging only weight in the morning).
 - View progress via historical lists, trend overviews, and **range-based area charts** that show intra-day variance.
+- Access data via an **MCP Server**, allowing AI agents to query stats and log new measurements directly.
 - Maintain full ownership of your data in a local MongoDB database.
 
 The system is intentionally:
@@ -45,23 +46,65 @@ The system is intentionally:
 ### 1. Web Frontend (SolidJS + Vite)
 - **Role**: Premium user interface for data entry and visualization.
 - **Features**:
-  - **Visual Entry Form**: Intuitive, spatial data entry using an interactive anatomical body diagram. Inputs for circumferences and skinfolds are positioned directly over the corresponding body parts for rapid, context-aware logging.
-  - **History**: Sortable table of all past measurements.
-  - **Reports & Viz**: Advanced charts using **Range/Area bands** for metrics like weight. Instead of a single line, use areas to represent daily highs, lows, and averages to visualize intra-day fluctuations (e.g., morning vs. evening weight).
-  - **Trends**: Visual indicators of changes over 7 and 30 days, calculated from aggregated daily baselines.
+  - **Visual Entry Form**: Intuitive, spatial data entry using an interactive anatomical body diagram. Inputs for circumferences and skinfolds are positioned directly over the corresponding body parts.
+  - **History Management**: Sortable table with full **Edit/Delete** capabilities.
+  - **D3 Charts**: Real-time trend visualization with **Goal Projections**.
+  - **Multi-Tab Analytics**: Specialized calculators for Body Fat (JP 3-Site, Navy) and Macros (Bodybuilder/LBM-based).
 
 ### 2. Node.js API (Koa + TypeScript)
 - **Role**: Handles business logic and serves as the gateway to the database.
 - **Responsibilities**:
-  - Validates incoming measurement data using **Zod**.
-  - Provides trend calculations (deltas) for the frontend.
-  - Manages CRUD operations for entries and nested skinfold records.
-  - Centralized error handling and standardized JSON responses.
+  - Validates data using **Zod**.
+  - CRUD operations for entries with nested site-specific data.
+  - Standardized JSON responses for both the UI and AI agents.
 
-### 3. Database (MongoDB)
+### 3. MCP Server (Node.js)
+- **Role**: Model Context Protocol interface for AI interaction.
+
+### 4. Database (MongoDB)
 - **Role**: Flexible document storage.
-- **Schema**:
-  - `Entries`: A single collection where each document contains all measurements (core, skinfolds, and circumferences) for a specific point in time.
+
+---
+
+## 🚀 Current Feature Set (The "Peak Physique" Vision)
+
+We have moved beyond simple tracking into a clinical-grade bodybuilding companion.
+
+### 1. Advanced Analytics Suite
+- **Body Fat Multi-Formula Analyzer**: Real-time calculation using both **Jackson-Pollock 3-Site Skinfolds** and **U.S. Navy Circumference** methods. Includes instructional tooltips for precision measurement sites.
+- **Macro Blueprint Builder**: Specific for bodybuilders using the **Katch-McArdle (LBM-based)** formula. Supports Training Intensity profiling and phase-specific (Bulk/Cut/Maintenance) targets.
+- **Goal Projection Engine**: Forecasts your target date for hitting a body fat percentage goal based on a lean-mass preservation model and caloric deficit.
+
+### 2. High-Fidelity Visualization
+- **Dynamic D3.js Workspace**: Interactive weight trend chart with **Future Goal Projections** visualized as dashed trend lines, integrated directly with your profile metrics.
+- **Technical Typography**: Global use of `font-mono` for all numeric data ensuring a technical, high-precision aesthetic.
+
+### 3. Data Integrity & Management
+- **Full History CRUD**: Ability to view, edit, and delete any historical entry. Editing mode intelligently rehydrates the anatomical silhouette with past state.
+- **Temporal Stability**: Powered by **Luxon** for robust date arithmetic and local-sensitive formatting across all analytics.
+
+---
+
+## 🛠️ Refactoring & Consolidation Roadmap (Next Steps)
+
+The application has grown rapidly. To maintain long-term stability and performance, the following refactoring steps are recommended:
+
+### 1. Component Decomposition (Priority: High)
+`App.tsx` is currently exceeding 700 lines. It should be split into functional modules:
+- `/src/components/tabs/`: Extract `Dashboard`, `LogEntry`, `History`, `Calculator`, `Macros`, and `Projections` into dedicated files.
+- `/src/components/ui/`: Create reusable `Card`, `MetricDisplay`, and `InfoTip` components.
+
+### 2. Mathematical Utility Core
+The complex logic for Jackson-Pollock, Navy Method, Katch-McArdle, and Goal Projections should be moved from inline component functions into a `/src/lib/formulas.ts` utility file.
+- **Benefit**: Allows for unit testing of the math logic and keeps the UI logic clean.
+
+### 3. State Management Refinement
+Currently, state is handled via dozens of independent signals. 
+- **Recommendation**: Create a central `MeasurementStore` or use a structured object for form state to reduce the boilerplate of deep signal updates.
+
+### 4. API & Schema Synchronization
+- **Zod Sharing**: Export the Zod schemas from the API and use them in the frontend for client-side validation before submission.
+- **Trend Aggregation**: Move the "stabilizing trend" and delta calculations from the frontend to a specialized backend reporter to keep the UI layer "thin".
 
 ---
 
@@ -71,126 +114,38 @@ The system is intentionally:
 - **Height** (cm)
 - **Body Weight** (kg)
 - **Body Fat %** (percent)
-- **Skinfolds** (mm) — Multiple sites (e.g., Abdomen, Thigh, Chest, Suprailiac)
-- **Circumferences** (cm) — Multiple sites (e.g., Neck, Shoulders, Chest, Upper Arm, Forearm, Waist, Hips, Thigh, Calf)
-
-### Key User Flows
-- **Log Entry**: Add a new snapshot with any subset of fields (e.g., just weight, or just a specific limb circumference).
-- **Trend Snapshot**: See "Latest stats" with automatic deltas (e.g., -0.8kg in 7 days).
-- **Intra-day Analysis**: Review variance in data captured throughout a single day (e.g., weight swings).
-- **Daily/Weekly Reports**: Review detailed progress reports segmented by day and week, using aggregation to smooth out anomalies.
-- **Review History**: Scroll through past entries to see progress.
-- **Manage Data**: Edit or delete incorrect entries.
+- **Skinfolds** (mm) — Abdomen, Thigh, Chest, Suprailiac, Triceps, Subscapular.
+- **Circumferences** (cm) — Neck, Waist, Hips, Chest, etc.
 
 ---
 
 ## API Contract
 
 ### Measurements
-- `GET /entries?from=...&to=...&limit=...` - List historical entries.
-- `GET /entries/latest` - Returns the most recent entry + calculated trends.
-- `GET /reports/trends?period=daily|weekly&type=range` - Returns aggregated data including `min`, `max`, and `avg` for the period to support area charts.
-- `POST /entries` - Create a new entry (supports partial payloads).
+- `GET /entries` - List historical entries.
+- `GET /entries/latest` - Returns the most recent entry.
+- `POST /entries` - Create a new entry.
 - `PATCH /entries/:id` - Update existing entry data.
 - `DELETE /entries/:id` - Remove an entry.
-
-### Request Shape (Example `POST /entries`)
-```json
-{
-  "measuredAt": "2026-01-02T08:00:00.000Z",
-  "heightCm": 190.5,
-  "weightKg": 108.0,
-  "bodyFatPercent": 16.3,
-  "skinfolds": [
-    { "site": "abdomen", "mm": 29 },
-    { "site": "thigh", "mm": 25 }
-  ],
-  "circumferences": [
-    { "site": "neck", "cm": 42.5 },
-    { "site": "chest", "cm": 115.0 },
-    { "site": "upper_arm_left", "cm": 40.0 }
-  ],
-  "notes": "Fasted AM"
-}
-```
-
----
-
-## Data Model (MongoDB Schema)
-
-### `Entries` collection
-```json
-{
-  "_id": "ObjectId",
-  "measuredAt": "ISODate",
-  "heightCm": "Number",
-  "weightKg": "Number",
-  "bodyFatPercent": "Number",
-  "skinfolds": [
-    { "site": "String", "mm": "Number" }
-  ],
-  "circumferences": [
-    { "site": "String", "cm": "Number" }
-  ],
-  "notes": "String",
-  "createdAt": "ISODate",
-  "updatedAt": "ISODate"
-}
-```
-
----
-
-## Visual Design Reference
-
-The data entry flow uses a spatial mapping system. Instead of long lists of labels, the UI features an anatomical silhouette where input fields are anchored to specific muscle groups and measurement sites.
-
-![Visual Entry Concept](body_dimension_concept.png)
-
----
-
-## Configuration Model
-
-All configuration is environment-variable driven.
-
-### API
-- `DATABASE_URL`: Connection string for MongoDB (e.g., `mongodb://db:27107/body-dimensions`).
-- `PORT`: API binding port (default 3000).
-- `CORS_ORIGIN`: Allowed frontend origin.
-
-### Web
-- `VITE_API_URL`: Backend API endpoint.
 
 ---
 
 ## Deployment Model (Docker Compose)
 
-The entire stack is managed as a single unit via Docker Compose.
-
-### Quick Start
 ```bash
 docker compose up -d --build
 ```
 
 ### Included Services
 - `api`: Node.js backend.
-- `web`: SolidJS frontend (served via Nginx).
-- `db`: MongoDB 7.0 instance.
+- `web`: SolidJS frontend.
+- `mcp`: MCP server.
+- `db`: MongoDB 7.0.
 
 ---
 
 ## Design Philosophy
 
-This project optimizes for **Data Autonomy** and **Simplicity**.
-
-- **No Placeholders**: Every feature in the scope is intended for real use.
-- **Data Granularity**: Designed for "entry-first" logging. Whether you log 10 times a day or once a week, the system handles partial data gracefully.
-- **Visualization First**: Charts aren't just lines; they are designed to show the "truth" of the data, including variance and range, to help distinguish between actual progress and daily fluctuations.
-- **Single Command**: One `docker compose up` should result in a fully functional, production-ready private service.
-
----
-
-## Future Evolution (Post-MVP)
-- **Calculated BF%**: Automated formulas based on skinfold entries.
-- **Data Portability**: Export/Import via CSV.
-- **Visuals**: Charts for weight and body fat trends.
-- **Photos**: Progress picture attachments per entry.
+- **No Placeholders**: Real tools for real athletes.
+- **Visualization First**: D3 charts that show the truth of the data.
+- **Programmatic First**: AI-ready from day one via MCP and structured JSON.

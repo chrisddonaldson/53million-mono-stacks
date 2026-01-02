@@ -1,0 +1,51 @@
+services:
+  db:
+    image: mongo:7.0
+    container_name: body-dimensions-db
+    volumes:
+      - ./data/db:/data/db
+    ports:
+      - "27017:27017"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./api
+    container_name: body-dimensions-api
+    environment:
+      DATABASE_URL: mongodb://db:27017/body-dimensions
+      PORT: 3000
+      CORS_ORIGIN: "http://localhost:5173"
+    ports:
+      - "3003:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./web
+    container_name: body-dimensions-web
+    environment:
+      VITE_API_URL: http://localhost:3003
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  mcp:
+    build:
+      context: ./mcp
+    container_name: body-dimensions-mcp
+    environment:
+      API_URL: http://api:3000
+    depends_on:
+      - api
+    restart: unless-stopped
