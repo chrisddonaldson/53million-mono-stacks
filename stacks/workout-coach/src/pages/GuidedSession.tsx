@@ -5,6 +5,8 @@ import { workoutActions } from "../stores/workoutStore";
 import { settingsActions, settingsStore } from "../stores/settingsStore";
 import { WorkflowEngine } from "../engines/workflow/WorkflowEngine";
 import { VoiceCoach } from "../engines/audio/VoiceCoach";
+import { TTSEngine } from "../engines/audio/TTSEngine";
+import { RemoteTTSEngine } from "../engines/audio/RemoteTTSEngine";
 import { WebGLEngine } from "../engines/webgl/WebGLEngine";
 import { Button } from "../components/ui/Button";
 import { formatTime } from "../lib/utils";
@@ -255,7 +257,11 @@ export default function GuidedSession() {
     sessionActions.createSession(workoutId, profile.meta.title, timeline);
     
     // Initialize engines
-    voiceCoach = new VoiceCoach();
+    const ttsEngine = settingsStore.audio.ttsProvider === "stack"
+      ? new RemoteTTSEngine(settingsStore.audio.ttsUrl)
+      : new TTSEngine();
+      
+    voiceCoach = new VoiceCoach(ttsEngine);
     voiceCoach.setMasterVolume(settingsStore.audio.masterVolume ?? 0.5);
     
     if (sessionStore.currentSession) {
@@ -288,6 +294,7 @@ export default function GuidedSession() {
 
         sessionEngine.on("stepChange", (_step: any) => {
             setStepElapsed(0);
+            voiceCoach?.clearQueue();
         });
 
         sessionEngine.on("statusChange", (status: any) => {
@@ -389,8 +396,14 @@ export default function GuidedSession() {
     }
   });
 
-  const handlePause = () => sessionEngine?.pause();
-  const handleResume = () => sessionEngine?.resume();
+  const handlePause = () => {
+    sessionEngine?.pause();
+    voiceCoach?.pause();
+  };
+  const handleResume = () => {
+    sessionEngine?.resume();
+    voiceCoach?.resume();
+  };
   const handleMasterVolumeChange = (event: Event) => {
     const target = event.target as HTMLInputElement;
     const nextValue = Number.parseFloat(target.value);
@@ -526,7 +539,7 @@ export default function GuidedSession() {
                 size="sm"
                 variant="ghost"
                 class="rounded-full w-8 h-8 p-0 text-white text-base hover:bg-white/10"
-                onClick={handlePause}
+                onClick={() => sessionGetters.isActive() ? handlePause() : handleResume()}
               >
                 {sessionGetters.isActive() ? "⏸" : "▶"}
               </Button>

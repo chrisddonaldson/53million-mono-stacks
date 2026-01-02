@@ -4,6 +4,8 @@ interface AudioSettings {
   voiceVolume: number; // 0-1
   masterVolume: number; // 0-1
   musicDucking: boolean;
+  ttsProvider: "browser" | "stack";
+  ttsUrl: string;
 }
 
 interface DisplaySettings {
@@ -27,6 +29,8 @@ const defaultSettings: SettingsStoreState = {
     voiceVolume: 0.8,
     masterVolume: 0.5,
     musicDucking: true,
+    ttsProvider: "browser",
+    ttsUrl: "http://localhost:3000",
   },
   display: {
     theme: "dark",

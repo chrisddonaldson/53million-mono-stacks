@@ -49,14 +49,21 @@ export const sessionActions = {
   },
 
   pauseSession(): void {
-    if (sessionStore.currentSession) {
+    if (sessionStore.currentSession && sessionStore.currentSession.state === "active") {
       setSessionStore("currentSession", "state", "paused");
+      setSessionStore("currentSession", "lastPauseTime", Date.now());
     }
   },
 
   resumeSession(): void {
     if (sessionStore.currentSession && sessionStore.currentSession.state === "paused") {
+      const now = Date.now();
+      const lastPause = sessionStore.currentSession.lastPauseTime || now;
+      const pausedDuration = now - lastPause;
+      
       setSessionStore("currentSession", "state", "active");
+      setSessionStore("currentSession", "pausedTime", (p) => (p || 0) + pausedDuration);
+      setSessionStore("currentSession", "lastPauseTime", undefined);
     }
   },
 

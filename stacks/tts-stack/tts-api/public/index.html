@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homelab TTS | Private Speech Synthesis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --accent-color: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 400;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        textarea {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 16px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1.1rem;
+            resize: vertical;
+            min-height: 120px;
+            transition: all 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.1);
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: var(--text-primary);
+            font-family: inherit;
+        }
+
+        button {
+            width: 100%;
+            background: var(--accent-color);
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        button:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(56, 189, 248, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-container {
+            margin-top: 24px;
+            min-height: 24px;
+            text-align: center;
+        }
+
+        .status {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            transition: opacity 0.3s ease;
+        }
+
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            border-top: 2px solid #000;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .audio-controls {
+            margin-top: 32px;
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        audio {
+            width: 100%;
+            height: 40px;
+            border-radius: 8px;
+        }
+
+        /* Custom Audio Styling */
+        audio::-webkit-media-controls-enclosure {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Homelab TTS</h1>
+            <p class="subtitle">Private Speech Synthesis Pipeline</p>
+        </header>
+
+        <div class="input-group">
+            <label for="text-input">Text to Speak</label>
+            <textarea id="text-input" placeholder="Type something for the homelab to say..."></textarea>
+        </div>
+
+        <div class="input-group">
+            <label for="voice-input">Voice Name (Optional)</label>
+            <input type="text" id="voice-input" placeholder="e.g. en_US-lessac-medium">
+        </div>
+
+        <button id="speak-btn">
+            <span class="btn-text">Speak</span>
+            <div class="loader" id="loader"></div>
+        </button>
+
+        <div class="audio-controls" id="audio-container">
+            <audio id="audio-player" controls></audio>
+        </div>
+
+        <div class="status-container">
+            <div id="status" class="status"></div>
+        </div>
+    </div>
+
+    <script>
+        const speakBtn = document.getElementById('speak-btn');
+        const textInput = document.getElementById('text-input');
+        const voiceInput = document.getElementById('voice-input');
+        const audioContainer = document.getElementById('audio-container');
+        const audioPlayer = document.getElementById('audio-player');
+        const status = document.getElementById('status');
+        const loader = document.getElementById('loader');
+        const btnText = speakBtn.querySelector('.btn-text');
+
+        speakBtn.addEventListener('click', async () => {
+            const text = textInput.value.trim();
+            const voice = voiceInput.value.trim();
+
+            if (!text) {
+                updateStatus('Please enter some text.', 'error');
+                return;
+            }
+
+            setLoading(true);
+            updateStatus('Synthesizing...');
+            audioContainer.style.display = 'none';
+
+            try {
+                const response = await fetch('/tts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text, voice }),
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || error.error || 'TTS failed');
+                }
+
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+
+                audioPlayer.src = url;
+                audioContainer.style.display = 'block';
+                updateStatus('Synthesis complete.');
+
+                // Auto-play
+                audioPlayer.play().catch(e => console.log('Auto-play blocked, user must click play.'));
+
+            } catch (err) {
+                console.error(err);
+                updateStatus(`Error: ${err.message}`, 'error');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        function updateStatus(msg, type = '') {
+            status.textContent = msg;
+            status.style.color = type === 'error' ? '#f87171' : '#94a3b8';
+        }
+
+        function setLoading(isLoading) {
+            speakBtn.disabled = isLoading;
+            loader.style.display = isLoading ? 'block' : 'none';
+            btnText.style.display = isLoading ? 'none' : 'block';
+        }
+
+        // Add health check on load
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const res = await fetch('/health');
+                const data = await res.json();
+                if (data.piper !== 'reachable') {
+                    updateStatus('Warning: Piper engine seems unreachable.', 'error');
+                }
+            } catch (e) {
+                updateStatus('Warning: API unreachable.', 'error');
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,20 +1,15 @@
-export interface TTSOptions {
-  rate?: number; // 0.1 - 10 (default 1)
-  pitch?: number; // 0 - 2 (default 1)
-  volume?: number; // 0 - 1 (default 1)
-  lang?: string; // default 'en-US'
-}
+import type { ITTSEngine, TTSOptions } from "./types";
 
-export class TTSEngine {
+export class TTSEngine implements ITTSEngine {
   private synth: SpeechSynthesis;
   private voice: SpeechSynthesisVoice | null = null;
   private activeResolve: (() => void) | null = null;
-  private activeReject: ((reason?: unknown) => void) | null = null;
   private defaultOptions: Required<TTSOptions> = {
     rate: 1.0,
     pitch: 1.0,
     volume: 0.8,
     lang: "en-US",
+    voice: ""
   };
 
   constructor() {
@@ -105,7 +100,6 @@ export class TTSEngine {
       const utterance = new SpeechSynthesisUtterance(text);
       this.activeUtterance = utterance; // Keep ref
       this.activeResolve = resolve;
-      this.activeReject = reject;
       
       if (this.voice) {
         utterance.voice = this.voice;
@@ -119,7 +113,6 @@ export class TTSEngine {
       utterance.onend = () => {
         this.activeUtterance = null;
         this.activeResolve = null;
-        this.activeReject = null;
         resolve();
       };
       utterance.onerror = async (event) => {
@@ -143,14 +136,12 @@ export class TTSEngine {
             retryUtterance.onend = () => {
               this.activeUtterance = null;
               this.activeResolve = null;
-              this.activeReject = null;
               resolve();
             };
             retryUtterance.onerror = () => {
               console.error("TTS retry failed, skipping");
               this.activeUtterance = null;
               this.activeResolve = null;
-              this.activeReject = null;
               resolve(); // Resolve anyway to continue
             };
             
@@ -159,13 +150,11 @@ export class TTSEngine {
             console.error("TTS retry error:", retryError);
             this.activeUtterance = null;
             this.activeResolve = null;
-            this.activeReject = null;
             resolve(); // Resolve to continue queue
           }
         } else {
           this.activeUtterance = null;
           this.activeResolve = null;
-          this.activeReject = null;
           resolve(); // Resolve instead of reject to continue queue
         }
       };
@@ -193,7 +182,6 @@ export class TTSEngine {
       this.activeResolve();
     }
     this.activeResolve = null;
-    this.activeReject = null;
     if (this.activeUtterance) {
       this.activeUtterance.onend = null;
       this.activeUtterance.onerror = null;

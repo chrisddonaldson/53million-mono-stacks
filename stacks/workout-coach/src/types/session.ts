@@ -60,6 +60,7 @@ export interface GuidedSession {
   startTime: number; // Unix timestamp
   elapsedTime: number; // Total elapsed seconds
   pausedTime: number; // Total time spent paused
+  lastPauseTime?: number; // timestamp when pause started
   settings: SessionSettings;
 }
 

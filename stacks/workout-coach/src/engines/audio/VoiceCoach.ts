@@ -1,18 +1,18 @@
-import { TTSEngine, type TTSOptions } from "./TTSEngine";
+import type { ITTSEngine, TTSOptions } from "./types";
+import { TTSEngine } from "./TTSEngine";
 import type { VoiceCue } from "../../types/session";
 
 
 export class VoiceCoach {
-  private tts: TTSEngine;
+  private tts: ITTSEngine;
   private cueQueue: Array<{ text: string; options?: TTSOptions }> = [];
   private isEnabled: boolean = true;
   private queueVersion: number = 0;
   private masterVolume: number = 1;
-  private lastAnnouncedText: string = "";
   private lastAnnouncedTime: number = 0;
   private shortCueRegex = /^[A-Za-z]{1,4}$/;
 
-  constructor(tts?: TTSEngine) {
+  constructor(tts?: ITTSEngine) {
     this.tts = tts ?? new TTSEngine();
     this.tts.init();
   }
@@ -45,7 +45,6 @@ export class VoiceCoach {
     
     const version = this.queueVersion;
     
-    this.lastAnnouncedText = cue.text;
     this.lastAnnouncedTime = now;
     
     // Add to queue
@@ -82,7 +81,7 @@ export class VoiceCoach {
 
       const postDelayMs = 100;
       await new Promise(resolve => setTimeout(resolve, postDelayMs));
-      this.tts.resetIfIdle();
+      this.tts.resetIfIdle?.();
     }
   }
 

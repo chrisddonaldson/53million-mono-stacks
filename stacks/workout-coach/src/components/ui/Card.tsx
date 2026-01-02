@@ -52,3 +52,16 @@ export function CardContent(props: ComponentProps<"div">) {
     </div>
   );
 }
+
+export function CardDescription(props: ComponentProps<"p">) {
+  const [local, others] = splitProps(props, ["class", "children"]);
+  
+  return (
+    <p
+      class={cn("text-sm text-muted-foreground", local.class)}
+      {...others}
+    >
+      {local.children}
+    </p>
+  );
+}

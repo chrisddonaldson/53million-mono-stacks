@@ -1,0 +1,29 @@
+services:
+  wyoming-piper:
+    image: rhasspy/wyoming-piper:latest
+    container_name: wyoming-piper
+    command: ["--voice", "${DEFAULT_VOICE:-en_US-libritts_r-medium}", "--uri", "tcp://0.0.0.0:10200", "--data-dir", "/data", "--speaker", "3922"]
+    volumes:
+      - ./data/piper:/data
+    expose:
+      - "10200"
+    restart: unless-stopped
+
+  tts-api:
+    build: ./tts-api
+    container_name: tts-api
+    environment:
+      PIPER_HOST: wyoming-piper
+      PIPER_PORT: "10200"
+      DEFAULT_VOICE: "${DEFAULT_VOICE:-en_US-libritts_r-medium}"
+      BIND_HOST: "0.0.0.0"
+      BIND_PORT: "3000"
+      MAX_TEXT_CHARS: "2000"
+      SOCKET_TIMEOUT_MS: "30000"
+    ports:
+      # Bind to LAN/VPN interface if you want (recommended),
+      # e.g. "192.168.1.10:3000:3000"
+      - "3000:3000"
+    depends_on:
+      - wyoming-piper
+    restart: unless-stopped

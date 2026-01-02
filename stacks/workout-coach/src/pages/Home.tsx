@@ -28,8 +28,10 @@ export default function Home() {
       <QuickStartModal open={quickStartOpen()} onOpenChange={setQuickStartOpen} />
       
       <div class="min-h-screen bg-background p-4 flex flex-col items-center justify-center">
-        <div class="absolute top-4 left-4 text-xs text-muted-foreground">
-          System Menu
+        <div class="absolute top-4 left-4 flex gap-2">
+          <Button variant="ghost" size="sm" onClick={() => navigate("/settings")}>
+            ⚙️ Settings
+          </Button>
         </div>
         <div class="w-full max-w-2xl space-y-6">
         <div class="text-center space-y-2">
