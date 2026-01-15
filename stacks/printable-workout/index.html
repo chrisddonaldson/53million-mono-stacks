@@ -1,0 +1,1142 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workout Log – Printable & Config-Driven</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+  <style>
+    summary { list-style: none; }
+    summary::-webkit-details-marker { display: none; }
+    details.level-1 > summary { background: #0f172a; color: #f8fafc; border-left: 4px solid #475569; }
+    details.level-2 > summary { background: #e2e8f0; color: #0f172a; border-left: 3px solid #334155; }
+    details.level-3 > summary { background: #f8fafc; color: #1e293b; border-left: 2px solid #cbd5e1; }
+    .exercise-title { display: flex; align-items: center; gap: 0.5rem; padding: 0; margin: 0; color: #0f172a; font-weight: 800; letter-spacing: -0.01em; }
+    .exercise-done { background: #f0fdf4; color: #14532d; border-left-color: #22c55e; }
+    .exercise-done-badge { display: inline-flex; align-items: center; gap: 0.3rem; margin-left: 0.5rem; padding: 0.2rem 0.45rem; background: #ecfdf3; color: #15803d; border: 1px solid #bbf7d0; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; }
+    .summary-pill { display: inline-flex; align-items: flex-end; gap: 0.35rem; margin-left: 0.5rem; padding: 0.15rem 0.45rem; background: #e2e8f0; color: #334155; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.7rem; font-weight: 600; line-height: 1.1; max-height: 1.5rem; align-self: flex-end; }
+    .exercise-card { border: 1px solid #e2e8f0; border-top: 2px solid #cbd5e1; background: transparent; border-radius: 0.75rem; box-shadow: 0 8px 24px -12px rgba(15, 23, 42, 0.25); padding: 1rem; margin-top: 0.5rem; }
+#workout { display: none; }
+    .summary-pill-done { background: #ecfdf3; color: #166534; border-color: #bbf7d0; }
+    .section-done > summary { background: #ecfdf3 !important; color: #166534 !important; border-left-color: #22c55e !important; }
+    .set-complete { opacity: 0.55; text-decoration: line-through; }
+    .set-complete td { background: #f8fafc !important; }
+     @media print {
+       body { background: white; }
+       .no-print { display: none !important; }
+       .card { box-shadow: none !important; border-color: #e2e8f0 !important; }
+       .exercise-card { box-shadow: none !important; border-color: #e2e8f0 !important; }
+       img.exercise-thumb { max-width: 2.5in; height: auto; }
+       .print-break-after { page-break-after: always; break-after: page; }
+       .print-only { display: block !important; }
+       .print-flex { display: flex !important; }
+       .print-breadcrumb { position: sticky; top: 0; z-index: 5; background: white; padding: 6px 0; border-bottom: 1px solid #e2e8f0; }
+     }
+
+     .print-only, .print-flex { display: none; }
+
+  </style>
+</head>
+<body class="min-h-full bg-slate-50 text-slate-900">
+  <main class="max-w-6xl mx-auto px-2 py-8 space-y-6">
+    <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">Printable Workout Prototype</p>
+        <h1 class="text-3xl font-bold text-slate-900">Workout Log – Printable & Config-Driven (YAML + Solid)</h1>
+        <p class="text-sm text-slate-600">Published: 2026-01-07 · Collapsible on web, fully expanded on print</p>
+      </div>
+      <div class="flex flex-col items-start gap-2 sm:items-end">
+        <div id="clockWidget" class="flex flex-col sm:items-end rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
+          <span id="clockTime" class="text-lg font-semibold text-slate-900">--:--:--</span>
+          <span id="clockDay" class="text-sm text-slate-700">—</span>
+          <span id="clockZone" class="text-xs font-semibold uppercase tracking-wide text-slate-500">—</span>
+        </div>
+        <div class="no-print flex gap-2">
+          <button id="expandAll" class="rounded-lg bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800">Expand all</button>
+          <button id="collapseAll" class="rounded-lg border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-800 shadow-sm hover:bg-white">Collapse all</button>
+        </div>
+      </div>
+    </header>
+
+
+    <p class="text-sm text-slate-700 bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+      Headers are collapsible in web view. Before printing, all sections auto-expand and simplify styling for a clean PDF.
+    </p>
+
+    <section id="workout" class="space-y-4"></section>
+
+    <section id="solid-render-root" class="space-y-4"></section>
+  </main>
+
+  <script>
+    const rawMarkdown = `Published: 2026-01-07
+# Upper
+## Forearms
+
+###  Hands (Combo)
+
+> **Focus:** Finger extensors, intrinsic hand muscles, thumb strength, crush + pinch grip  
+> **Role in program:** Neural activation → local endurance → connective-tissue resilience
+
+#### Rubber Finger Lever Holds
+**[Image: Finger_Flexbar_Curl.jpg]**
+- **Purpose:** Neural activation and extensor balance
+- **2 × 30 reps** (red band)
+- Fingers fully open, slow control, no wrist movement
+
+#### Thumb Opposition Press (Plate or Band)
+**[Image: tumbopposition.png]**
+- **2 × 15–20**
+- Slow squeeze, thumb drives into fingers, no wrist bend
+
+#### Plate Pinch Hold (Smooth Side Out)
+**[Image: plate-pinch-984107551.jpg]**
+- **2 × 30–40 s**
+- Tall posture, shoulder packed, _no re-gripping_
+
+#### Wrist-Neutral Grip Burnout (Light DBs)
+**[Image: neutral_grip_plate_wrist_curls.jpg]**
+- **1–2 × AMRAP**
+- Neutral wrist, crush the handle, stop before form breaks
+
+---
+
+### Wrist Flexion
+
+> **Focus:** Finger flexors, wrist flexors, carryover to pulling & pressing
+
+#### Seated Dumbbell Wrist Curls
+**[Image: Seated Dumbell wrist curl.jpg]**
+- **2 × 15–20**
+- Controlled full ROM, deep stretch at bottom
+
+#### Barbell Wrist Flexion (Low Pulley or Barbell)
+**[Image: barbell wrist flexion.jpg]**
+- **2 × 12–15**
+- Constant tension, wrists only move
+
+#### Heavy Farmer’s Carries
+**[Image: farmers-carry-kettlebell-487461920-1.jpg]**
+- **3 × 30–40 m**
+- Heavy load, upright posture, ribs down
+
+#### Wrist Curl Drop Set
+**[Image: barbell wrist flexion.jpg]**
+- **1 extended set**
+- Full ROM → partials → **20 s iso hold**
+
+---
+
+### Wrist Extension
+
+> **Focus:** Extensors, elbow health, grip balance, tendon durability
+
+#### Seated Dumbbell Wrist Extensions
+**[Image: dumbbell-reverse-wrist-curls-jan22-1024x576-2003626446.jpg]**
+- **2 × 15–20**
+- Slow, controlled, pause briefly at top
+
+#### Barbell Wrist Extensions
+**[Image: reverser wrist crrl.jpg]**
+- **2 × 12–15**
+- Constant tension, no elbow movement
+
+#### Controlled Wrist Deviations (Radial & Ulnar)
+**[Image: Pasted image 20260109070043.png]**
+- **2 × 12–15 / side**
+- https://www.youtube.com/watch?v=AvLZWd4udxg
+- Light load, strict control, small ROM
+
+#### Reverse EZ-Bar Curls
+**[Image: reverse ez bar curl.jpg]**
+- **3 × 6–10**
+- Heavy, controlled eccentric, wrists neutral
+
+## Upper Arm 
+
+### Biceps
+#### Preacher Curl (Machine or EZ-Bar)
+
+**[Image: preacher-curl-1000x1000-4233788383.jpg]**
+- **2 × 12–15**
+- Upper arm fixed, stop short of lockout
+- _At-home (DB/BB):_ DB preacher curl over incline bench or arm braced on thigh
+
+#### Cross-Body Hammer Curl
+**[Image: cross body hammer curl.png]**
+- **1–2 × 20 alternating**
+- Neutral grip, elbow tight
+- _At-home (DB/BB):_ Cross-body DB hammer curl (same movement)
+
+#### EZ-Bar Curl (Standing)
+**[Image: ex bar curls.jpg]**
+- **3 × 6–8**
+- Controlled eccentric, no hip drive
+- _At-home (DB/BB):_ Straight-bar barbell curl
+
+#### Cable Curl Mechanical Drop Set
+**[Image: cable curl.jpg]**
+- **1–2 rounds**
+- Standing → step-forward → top-range pulses
+- _At-home (DB/BB):_ DB curl → incline DB curl → top-range pulses
+
+---
+
+### Rotator Cuff
+
+#### External Rotation (Band or Cable, Elbow at Side)
+**[Image: external-cable-rotation-2607682008.jpg]**
+- **2 × 12–15**
+- Elbow pinned, slow control
+- _At-home (DB/BB):_ Side-lying dumbbell external rotation
+
+#### Internal Rotation (Band or Cable, Elbow at Side)
+**[Image: internal rotation.jpg]**
+- **2 × 12–15**
+- Tall posture, shoulder stays back
+- _At-home (DB/BB):_ Side-lying internal rotation (light DB)
+
+#### External Rotation at 90 Degrees (Band or Cable)
+
+**[Image: tband-shld-ext-rot-90__635919246741088096_4-3002005634.jpg]**
+- **2 × 8–10**
+- Long eccentric, no shrug
+- _At-home (DB/BB):_ Seated DB 90° external rotation (very light)
+
+#### Overhead Iso Hold (Plate or DBs)
+**[Image: BrazilianPlatHold.jpg]**
+- **2 × 30–40 s**
+- Ribs down, steady breathing
+- _At-home (DB/BB):_ Single-arm DB overhead hold
+
+---
+
+### Shoulders
+#### Lean-Away Cable Lateral Raise
+**[Image: lean_away_lateral_raises.jpg]**
+- **3 × 12–15**
+- Lead with elbow, no swing
+- _At-home (DB/BB):_ Lean-away DB lateral raise (hold rack or door frame)
+
+#### Chest-Supported Rear Delt Fly
+**[Image: rear-delt-fly-2748130636.jpg]**
+- **2 × 15–20**
+- Strict, zero momentum
+- _At-home (DB/BB):_ Incline-bench DB rear delt fly
+
+#### Machine Shoulder Press
+**[Image: Exercise/200_Bodybuilding/v1/media/shoulder-press-machine-v2-1802572354.png]**
+- **3 × 6–10**
+- Stop short of lockout
+- _At-home (DB/BB):_ Seated DB shoulder press or standing barbell OHP
+
+#### Cable Lateral Raise Mechanical Drop Set
+**[Image: lean_away_lateral_raises.jpg]**
+- **1 extended set**
+- Full → top partials → bottom partials
+- _At-home (DB/BB):_ DB lateral raise → partials → cheat-controlled partials
+    
+---
+
+### Triceps
+
+#### Single-Arm Cable Overhead Extension
+**[Image: tricep_extentsion.jpg]**
+- **2 × 12–15 / arm**
+- Light, full stretch, ribs down
+- _At-home (DB/BB):_ Single-DB overhead triceps extension
+
+#### Cable Pressdown (Neutral Grip)
+**[Image: trice-pushdown-benefits-4292198477.png]**
+- **2 × 15**
+- Elbows pinned, squeeze lockout
+- _At-home (DB/BB):_ Close-grip DB floor press
+
+#### Close-Grip Bench Press
+**[Image: close-grip-bench-press-howto-2-800-4027774772.jpg]**
+- **3 × 4–6**
+- Grip just inside shoulders, drive to lockout
+- _At-home (DB/BB):_ Barbell close-grip bench or DB close-grip press
+
+#### Cable Rope Pressdown (Extended Set)
+**[Image: Exercise/200_Bodybuilding/v1/media/cable-triceps-pushdown-for-upper-arms-895229712.jpg]**
+- **2 × 12–15 + partials**
+- Short rest, hard lockouts
+- _At-home (DB/BB):_ DB kickbacks → partials
+
+
+## Torso
+### Chest (Upper Bias, Controlled Pressing)
+
+> **Focus order:** Neural activation → Stability & patterning → Mechanical tension → Metabolic finish
+
+#### Low-Incline Cable Fly (≈30°)
+**[Image: cable-low-fly-1130179404.jpg]**
+- **2 × 12–15**
+- Slow squeeze, ribs down
+- **Why:** Clean pec activation with rib control
+
+#### Machine Chest Press (Light, Controlled)
+**[Image: machine bench.jpg]**
+- **2 × 12–15**
+- Chest-driven reps
+- **Why:** Grooves pressing pattern without joint fatigue
+
+#### Barbell Incline Bench Press
+**[Image: inlcine press.jpg]**
+- **3 × 5–8**
+- Upper-chest focus, stable arch
+- **Why:** Primary mechanical tension driver
+
+#### Cable Fly Mechanical Drop Set (High → Mid → Low)
+**[Image: cable files.jpg]**
+- **1 round × 10–12 each**
+- **Why:** Continuous-tension hypertrophy finisher with minimal shoulder stress
+
+---
+
+### Upper Back (Scapulae, Mid Traps, Serratus)
+
+> **Focus order:** Neural activation → Stability & control → Mechanical tension → Metabolic / capacity finish
+
+#### Cable Serratus Punch
+**[Image: cable serratus punch.jpg]**
+- **2 × 12–15**
+- Ribs down, reach long
+- **Why:** Restores serratus intent and scapular protraction without elbow noise
+
+#### Prone Incline Y-Raise
+**[Image: prone-y-raise-1024x538-4151053179.jpg]**
+- **2 × 10–12**
+- Scapulae pulled down, long arms
+- **Why:** High-quality scapular control in upward rotation
+
+#### Chest-Supported Row (3 s Retraction Hold)
+**[Image: chest supported roww.jpg]**
+- **3 × 8–10 + 3 s hold**
+- No shrug
+- **Why:** Primary mechanical tension for mid traps and rhomboids
+- NOTE: Trap bar?
+
+#### Cable Shrug Mechanical Drop Set
+**[Image: Cable-Shrugs-1-1158807454.jpg]**
+- **1 extended set**
+- Full ROM → partials → iso
+- **Why:** High-output upper-back finisher without spinal loading
+
+---
+
+### Lats (Depression, Adduction, Sweep)
+
+> **Focus order:** Neural activation → Control & path awareness → Mechanical tension → Metabolic overload
+
+#### Scapular Pull-Ups (Depression Only)
+**[Image: scapular-pull-up-muscles-768x753-2777257610.png]**
+- **2 × 6–10**
+- Arms straight
+- **Why:** Teaches lat-driven scapular depression before elbow flexion
+
+#### Single-Arm Cable Lat Sweep (Low → High)
+**[Image: cable-one-arm-lat-pulldown.webp]**
+- **2 × 12–14 / side**
+- Elbow to hip, no torso shift
+- **Why:** Length awareness with unilateral path control
+
+#### Pull-Ups (Weighted or Assisted)
+**[Image: pull-up-variations-2814564598.jpg]**
+- **3 × 6–8**
+- Elbows down and in
+- **Why:** Highest mechanical tension across a long ROM
+
+#### Wide-Grip Lat Pulldown Mechanical Drop Set
+**[Image: wide grip lat pulldown.jpg]**
+- **1 extended set** (wide → mid → narrow)
+- **Why:** Lat-dominant metabolic stress without grip or lower-back limits
+
+---
+
+
+### Neck (Flexion, Extension, Lateral Stability)
+
+> **Focus order:** Neural activation → Stability → Mechanical tension → Capacity / balance
+
+#### Supine Chin Tuck
+**[Image: Supine Chin Tuck.jpg]**
+- **2 × 8–10**
+- Slow tuck with brief hold
+- **Why:** Deep cervical flexor activation and posture reset
+
+#### Neck Extension (Machine / Plate / Cable)
+
+- **3 × 8–12**
+- Controlled arc
+- **Why:** Primary mechanical loading for posterior neck
+
+**[Image: Neck Extensions.jpg]**
+#### Neck Flexion (Machine / Plate / Cable)
+
+- **3 × 8–12**
+- Controlled arc
+- **Why:** Primary mechanical loading for posterior neck
+
+**[Image: Weighted-Neck-Flexion-1410979488.jpg]**
+
+#### 4-Way Band Isometric Series
+**[Image: CableNeckIsoHolds.jpg]**
+- **1 round × 20–30 s each direction**
+- **Why:** Balanced metabolic and endurance finish across all planes
+
+
+# Lower
+## Waist
+### Abdominals
+
+> **Focus order:** Neural activation → Stability & control → Mechanical tension → Metabolic finish
+
+#### Cable Kneeling Crunch (Short Range)
+
+- **2 × 12–15**
+- Slow exhale, ribs down
+- **Why:** Direct rectus activation without hip-flexor dominance
+
+#### Dead Bug w/ Band or Cable Pulldown
+
+- **2 × 6–8 / side**
+- Exhale → brace
+- **Why:** Anti-extension control with unilateral coordination
+
+#### Weighted Floor or Decline Sit-Up
+
+- **3 × 6–8**
+- Slow curl, no momentum
+- **Why:** Primary mechanical tension for the abdominals
+
+#### Hanging Knee Raise (Posterior Tilt)
+
+- **2 × AMRAP**
+- Pelvis curls up, no swing
+- **Why:** High-output metabolic finisher when fatigue tolerance is high
+
+### Hip Flexors
+
+> **Focus order:** Neural activation → Stability & length control → Mechanical tension → Metabolic finisher
+
+#### Supine Banded Hip Flexion (90° Knee)
+
+- **2 × 10 / side**
+- Slow tempo, ribs down
+- **Why:** Clean neural activation without spinal noise or momentum
+
+#### Half-Kneeling Cable Hip Flexion
+
+- **2 × 8 / side**
+- Glute squeeze, no torso shift
+- **Why:** Unilateral control with pelvic discipline in a lengthened range
+
+#### Standing Cable Hip Flexion
+
+- **3 × 8**
+- Stacked ribs, controlled eccentric
+- **Why:** Highest safe mechanical tension for the hip flexors
+
+#### Bench-Supported Hip Flexion Burnout
+
+- **1 × 45 s**
+- Short ROM, pelvis frozen
+- **Why:** Local metabolic fatigue without grip or swing limits
+
+> **Note:** Hanging knee raises are intentionally excluded here to limit crossover fatigue into abdominal work
+
+---
+
+### Lower Back / Deep Spinal Control
+
+> **Focus order:** Neural control → Stability → Mechanical tension → Isometric capacity
+
+#### Quadruped Cat → Segmental Neutral Control
+
+- **2 × 5 slow reps**
+- **5–1–5 tempo**
+- **Why:** Re-establishes spinal intent before loading
+
+#### Cable Anti-Rotation Hold (Tall-Kneeling)
+
+- **2 × 20–30 s / side**
+- No hip shift
+- **Why:** Anti-rotation stability without lumbar motion
+
+#### Chest-Supported Back Extension (Weighted)
+
+- **2 × 10–12**
+- Reach long, stop at neutral
+- **Why:** Mechanical tension for spinal extensors with zero shear
+
+#### Sorensen Hold
+
+- **1–2 × 30–45 s**
+- Breathe under tension
+- **Why:** End-range isometric endurance that ties everything together
+
+> **Note:** RDLs are deliberately excluded so lower-back work stays _waist-centric_, not posterior-chain dominant
+
+---
+
+
+## Thighs
+### Quads
+
+> **Focus order:** Activation → Stability → Mechanical tension → Metabolic stress
+
+#### Seated Leg Extension
+
+- **2 × 12–15**
+- **4–1–2–1 tempo**, hard lockout
+- **Why:** Pure quad neural activation and tendon preparation
+
+#### Slow Step-Down
+
+- **2 × 6–8 / side**
+- **5 s eccentric**
+- **Why:** Unilateral knee control with strong VMO engagement
+
+#### Hack Squat
+
+- **3 × 6–8**
+- Knee-dominant depth
+- **Why:** Safest way to apply heavy quad mechanical tension
+
+#### Leg Extension Drop Set
+
+- **1–2 rounds:** 10–12 → top-range partials
+- No rest
+- **Why:** Quad-specific metabolic overload with minimal joint risk 
+
+### Adductors
+
+> **Focus order:** Activation → Stability → Mechanical tension → Metabolic stress
+
+#### Seated Adductor Machine
+
+- **2 × 12–15**
+- 1–2 s squeeze at peak
+- **Why:** Direct neural recruitment; teaches adductor intent
+
+#### Copenhagen Side Plank
+
+- **2 × 20–30 s / side**
+- Hips stacked, ribs down
+- **Why:** Unilateral isometric strength and pelvic integrity
+
+#### Wide-Stance Barbell Squat
+
+- **3 × 4–6**
+- Toes slightly out, “pull feet inward”
+- **Why:** Heavy adductor-loaded tension under load
+
+#### Adductor Machine Burnout
+
+- **2 × 20–25**
+- Constant tension, no lockout rest
+- **Why:** Safe but brutal metabolic finish
+
+---
+
+
+### Hamstrings
+
+> **Focus order:** Neural → Unilateral control → Mechanical tension → Metabolic stress
+
+#### Seated Leg Curl (Machine)
+
+- **2 × 12–15**
+- Slow eccentrics, full stretch
+- **Why:** Pure knee-flexion neural activation; primes hamstrings without spinal fatigue
+
+#### Single-Leg Romanian Deadlift (DB or Cable)
+
+- **2 × 8–10 / side**
+- Square hips, long-range control
+- **Why:** Unilateral length awareness and pelvic control
+
+#### Barbell Romanian Deadlift
+
+- **3 × 6–8**
+- Heavy hinge, bar stays close
+- **Why:** Primary mechanical tension driver for hamstrings
+
+#### Seated Leg Curl (Drop Set)
+
+- **1–2 rounds:** 15 → AMRAP
+- Continuous reps, no rest
+- **Why:** Hamstring-safe metabolic finisher without axial load
+
+---
+
+
+### Glutes
+
+> **Focus order:** Activation → Stability → Mechanical tension → Metabolic stress
+
+#### Cable Hip Abduction
+
+- **2 × 15 / side**
+- Hard pause at top
+- **Why:** Glute med neural priming and lateral control
+
+#### Bulgarian Split Squat (Glute Bias)
+
+- **2 × 8–10 / side**
+- Long stride, slight forward lean
+- **Why:** Unilateral stability with lengthened glute loading
+
+#### Barbell Hip Thrust
+
+- **3 × 6–8**
+- Full lockout, ribs down
+- **Why:** Maximum mechanical tension in the shortened position
+
+#### Seated Hip Abduction Machine
+
+- **2 × 20**
+- Torso forward, continuous reps
+- **Why:** Metabolic burn without spinal fatigue
+
+---
+
+## Shank
+### Feet
+
+> **Focus:** Intrinsic foot muscles, arch control, ankle–knee alignment  
+> **Role:** Stability foundation for tibialis, calves, and knee health
+
+#### Short Foot (Arch Doming)
+
+- **2 × 8–10 holds (5–8 s)**
+- Barefoot, toes relaxed, lift arch without curling
+
+#### Toe Yoga (Big vs Lesser Toes)
+
+- **2 × 8–10 / pattern**
+- Slow, clean separation, no ankle movement
+
+#### Single-Leg Balance + Short Foot
+
+- **2 × 30 s / side**
+- Arch active, knee tracks over 2nd toe
+
+#### Farmer’s Carry on Toes
+
+- **2 × 20–30 m**
+- Slow steps, tall posture, no ankle collapse
+
+---
+
+### Tibialis
+
+> **Focus:** Anterior tibialis, ankle dorsiflexion strength, shin resilience
+
+#### Wall-Supported Tibialis Raise
+
+- **2 × 15**
+- Heels planted, slow eccentric
+
+#### Kettlebell Tib Bar Raise
+
+- **2 × 12–15**
+- Controlled tempo, full dorsiflexion
+
+#### Heavy Kettlebell Tib Bar Raise
+
+- **2 × 6–10**
+- Heavy load, strict form, no momentum
+
+#### Iso Tib Bar Raise
+
+- **2 × 20–30 s**
+- Max dorsiflexion, steady breathing
+
+---
+
+### Calves
+
+> **Focus:** Gastrocnemius + soleus hypertrophy, ankle stiffness, elastic strength
+
+#### Seated Machine Calf Raise
+
+- **2 × 12–15**
+- Slow eccentric, deep stretch, soleus focus
+
+#### Heavy Seated Calf Raise
+
+- **2 × 8–10**
+- Bent knee, no bounce, long squeeze at top
+
+#### Smith Machine Standing Calf Raise
+
+- **2 × 8–10**
+- Straight knee, pause in stretch, controlled concentric
+
+#### Heavy Single-Leg Standing Calf Raise (Machine or Smith)
+
+- **3 × 6–8**
+- Heavy load, full ROM, peak hold at top
+
+#### Standing Single-Leg Calf Raise Mechanical Drop Set
+
+- **1 round**
+- Straight-leg reps → bent-knee AMRAP → **20–30 s top partials**`;
+
+    const markdown = rawMarkdown.replace(/!\[\[(.+?)\]\]/g, (_, name) => `**[Image: ${name}]**`);
+    const container = document.getElementById('workout');
+    const html = marked.parse(markdown);
+    container.innerHTML = `<article class="prose prose-slate max-w-none">${html}</article>`;
+
+    const DEFAULT_WORK_SEC = 60;
+    const DEFAULT_REST_SEC = 120;
+    const PLACEHOLDER_IMG = 'https://placehold.co/200x200/EEE/31343C';
+
+    const globalClock = { now: new Date() };
+
+    const clockEls = {
+      time: document.getElementById('clockTime'),
+      day: document.getElementById('clockDay'),
+      zone: document.getElementById('clockZone'),
+    };
+
+    function formatTimeOfDay(date, withSeconds = true) {
+      const opts = { hour: '2-digit', minute: '2-digit', second: withSeconds ? '2-digit' : undefined, hour12: false };
+      return date.toLocaleTimeString([], opts);
+    }
+
+    function updateClockWidget() {
+      const now = new Date();
+      globalClock.now = now;
+      if (clockEls.time) clockEls.time.textContent = formatTimeOfDay(now, true);
+      if (clockEls.day) clockEls.day.textContent = now.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+      if (clockEls.zone) clockEls.zone.textContent = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Local';
+      refreshAllSummaries();
+    }
+
+    updateClockWidget();
+    setInterval(updateClockWidget, 1000);
+
+    function getNow() {
+      return globalClock.now || new Date();
+    }
+
+    function etaLabelFromSeconds(remainingSeconds) {
+      const seconds = Math.max(0, Math.round(remainingSeconds || 0));
+      const eta = new Date(getNow().getTime() + seconds * 1000);
+      const label = seconds ? formatTimeOfDay(eta, false) : 'now';
+      return `ETA ${label}`;
+    }
+
+    function refreshAllSummaries() {
+      container.querySelectorAll('table.set-table').forEach((table) => {
+        const heading = getExerciseHeadingForTable(table);
+        if (heading) {
+          attachExerciseSummary(heading, table);
+        }
+      });
+      refreshSectionSummaries();
+    }
+
+    function wrapHeadings(scope, level, summaryClasses, defaultOpen = false) {
+      const headings = Array.from(scope.querySelectorAll(`h${level}`));
+      headings.forEach((heading) => {
+        const details = document.createElement('details');
+        details.className = `group card border border-slate-200 bg-white rounded-lg shadow-sm level-${level}`;
+        details.open = defaultOpen;
+
+        const summary = document.createElement('summary');
+        summary.className = summaryClasses;
+        summary.innerHTML = `<span class="flex items-center gap-2"><span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-500 text-xs font-semibold">${heading.tagName.replace('H', '')}</span><span>${heading.innerHTML}</span><span class="ml-auto text-slate-400 transition-transform group-open:-rotate-90">▸</span></span>`;
+
+        const body = document.createElement('div');
+        body.className = 'px-4 pb-4 space-y-3 prose prose-slate max-w-none';
+
+        let node = heading.nextSibling;
+        while (node && !(node.nodeType === 1 && /^H[1-6]$/.test(node.tagName) && parseInt(node.tagName[1]) <= level)) {
+          const next = node.nextSibling;
+          body.appendChild(node);
+          node = next;
+        }
+
+        details.append(summary, body);
+        heading.replaceWith(details);
+      });
+    }
+
+    // Wrap H1 as main sections (expanded by default)
+    wrapHeadings(container, 1, 'group flex items-center gap-3 px-4 py-3 font-semibold text-lg text-slate-900', true);
+    container.querySelectorAll('details').forEach((section) => {
+      wrapHeadings(section, 2, 'group flex items-center gap-3 px-4 py-3 font-semibold text-slate-900');
+    });
+    container.querySelectorAll('details details').forEach((section) => {
+      wrapHeadings(section, 3, 'group flex items-center gap-3 px-4 py-3 font-semibold text-slate-800');
+    });
+
+    function parseSetInfo(listEl) {
+      const firstItem = listEl?.querySelector('li');
+      const text = firstItem ? firstItem.textContent.replace(/\s+/g, ' ').trim() : '';
+      const match = text.match(/(\d+)\s*[x×]\s*([0-9–\-]+[^\s]*)/i);
+      if (match) {
+        const sets = parseInt(match[1], 10) || 0;
+        const reps = match[2].trim();
+        return { sets: sets || 3, reps };
+      }
+      const rangeMatch = text.match(/(\d+)(?:\s*[–-]\s*(\d+))?/);
+      if (rangeMatch) {
+        const sets = parseInt(rangeMatch[2] || rangeMatch[1], 10) || 0;
+        const reps = text || '—';
+        return { sets: sets || 3, reps };
+      }
+      return null;
+    }
+
+    function makeSetTable(sets, repsText, workSeconds = DEFAULT_WORK_SEC, restSeconds = DEFAULT_REST_SEC) {
+      const table = document.createElement('table');
+      table.className = 'set-table w-full text-sm border border-slate-300 rounded-lg overflow-hidden mt-3 shadow-sm';
+      table.dataset.workSeconds = workSeconds;
+      table.dataset.restSeconds = restSeconds;
+
+      const thead = document.createElement('thead');
+      thead.className = 'bg-slate-50 text-slate-700';
+      thead.innerHTML = `<tr>
+        <th class="px-3 py-2 text-left font-semibold">Done</th>
+        <th class="px-3 py-2 text-left font-semibold">Set</th>
+        <th class="px-3 py-2 text-left font-semibold">Weight</th>
+        <th class="px-3 py-2 text-left font-semibold">Reps/Target</th>
+        <th class="px-3 py-2 text-left font-semibold">Work Time</th>
+        <th class="px-3 py-2 text-left font-semibold">Rest Time</th>
+        <th class="px-3 py-2 text-left font-semibold">Notes</th>
+      </tr>`;
+
+      const tbody = document.createElement('tbody');
+      tbody.className = 'divide-y divide-slate-200';
+      for (let i = 1; i <= sets; i++) {
+        const row = document.createElement('tr');
+        row.className = `${i % 2 === 0 ? 'bg-white' : 'bg-slate-50'} border-slate-200 hover:bg-slate-100/80 transition-colors`;
+        row.innerHTML = `
+          <td class="px-3 py-2 text-slate-700"><input type="checkbox" class="set-done h-4 w-4 rounded border-slate-300 text-slate-700" aria-label="Set ${i} done" /></td>
+          <td class="px-3 py-2 font-semibold text-slate-800">${i}</td>
+          <td class="px-3 py-2 text-slate-700">—</td>
+          <td class="px-3 py-2 text-slate-700">${repsText}</td>
+          <td class="px-3 py-2 text-slate-700">${formatDurationShort(workSeconds)}</td>
+          <td class="px-3 py-2 text-slate-700">${formatDurationShort(restSeconds)}</td>
+          <td class="px-3 py-2 text-slate-700">&nbsp;</td>
+        `;
+        tbody.appendChild(row);
+      }
+
+      table.append(thead, tbody);
+      return table;
+    }
+
+    function getTableTiming(table) {
+      const rows = table.querySelectorAll('tbody tr');
+      const work = parseInt(table.dataset.workSeconds || DEFAULT_WORK_SEC, 10);
+      const rest = parseInt(table.dataset.restSeconds || DEFAULT_REST_SEC, 10);
+      const totalSets = rows.length;
+      const doneSets = Array.from(table.querySelectorAll('.set-done')).filter((b) => b.checked).length;
+      const remainingSets = Math.max(totalSets - doneSets, 0);
+      const totalSeconds = totalSets * (work + rest);
+      const remainingSeconds = remainingSets * (work + rest);
+      return { totalSets, doneSets, totalSeconds, remainingSeconds };
+    }
+
+    function renderPills(target, pillContents) {
+      target.querySelectorAll('.summary-pill').forEach((p) => p.remove());
+      pillContents.forEach((content) => {
+        const pill = document.createElement('span');
+        pill.className = 'summary-pill';
+        if (content.html) pill.innerHTML = content.html;
+        else pill.textContent = content.text || '';
+        target.appendChild(pill);
+      });
+    }
+
+    function getExerciseHeadingForTable(table) {
+      const card = table.closest('.exercise-card');
+      if (card) {
+        const heading = card.querySelector('h4');
+        if (heading) return heading;
+      }
+      const prev = table.previousElementSibling;
+      if (prev && prev.tagName === 'H4') return prev;
+      return null;
+    }
+
+    function attachExerciseSummary(heading, table) {
+      const { totalSets, doneSets, totalSeconds, remainingSeconds } = getTableTiming(table);
+      const completedSeconds = Math.max(totalSeconds - remainingSeconds, 0);
+      const doneLabel = doneSets === totalSets && totalSets > 0 ? 'Completed' : `Done ${doneSets}/${totalSets}`;
+      renderPills(heading, [
+        { text: doneLabel },
+        { text: `Sets ${totalSets}` },
+        { html: `<span class="text-green-700 font-semibold">${formatClock(completedSeconds)}</span>/${formatClock(totalSeconds)} (rem ${formatClock(remainingSeconds)})` },
+        { text: etaLabelFromSeconds(remainingSeconds) },
+      ]);
+      heading.classList.toggle('exercise-done', doneSets === totalSets && totalSets > 0);
+    }
+
+    function wrapExerciseCard(heading) {
+      if (heading.dataset.cardWrapped === '1') return;
+      const card = document.createElement('div');
+      card.className = 'exercise-card space-y-3';
+      const parent = heading.parentElement;
+      if (!parent) return;
+      parent.insertBefore(card, heading);
+      card.appendChild(heading);
+      let cursor = heading.nextSibling;
+      while (cursor && !(cursor.nodeType === 1 && /^H[1-4]$/.test(cursor.tagName))) {
+        const next = cursor.nextSibling;
+        card.appendChild(cursor);
+        cursor = next;
+      }
+      heading.dataset.cardWrapped = '1';
+    }
+
+    function ensureExercisePlaceholder(heading) {
+      const card = heading.closest('.exercise-card');
+      if (!card) return null;
+      let img = card.querySelector('img.exercise-thumb');
+      if (img) return img;
+      const marker = card.querySelector('p strong');
+      let alt = 'Exercise image';
+      if (marker) {
+        const m = marker.textContent.match(/\[Image:\s*(.+?)\]/i);
+        if (m) alt = m[1].trim();
+        const p = marker.closest('p');
+        if (p) p.remove();
+      }
+      img = document.createElement('img');
+      img.className = 'exercise-thumb w-32 h-32 rounded-md border border-slate-200 bg-slate-100 object-cover';
+      img.src = `${PLACEHOLDER_IMG}?text=${encodeURIComponent(alt)}`;
+      img.alt = alt;
+      return img;
+    }
+
+    function enhanceExercisesWithSetTables() {
+      const exercises = container.querySelectorAll('h4');
+      exercises.forEach((heading) => {
+        heading.classList.add('exercise-title');
+        wrapExerciseCard(heading);
+        if (heading.dataset.hasTable === '1') return;
+        let cursor = heading.nextElementSibling;
+        let targetList = null;
+        while (cursor && !/^H[1-4]$/.test(cursor.tagName)) {
+          if (cursor.tagName === 'UL') {
+            targetList = cursor;
+            break;
+          }
+          cursor = cursor.nextElementSibling;
+        }
+        let info = targetList ? parseSetInfo(targetList) : null;
+        if (!info) {
+          info = { sets: 3, reps: '10–12' };
+        }
+
+        const card = heading.closest('.exercise-card');
+        if (card) {
+          // Collect existing non-table content inside the card (keeps blockquotes/paragraphs/lists)
+          const contentNodes = Array.from(card.childNodes).filter(
+            (n) => !(n.nodeType === 1 && n.classList.contains('set-table')) && !(n.nodeType === 3 && !n.textContent.trim())
+          );
+          const descNodes = contentNodes.filter((n) => n !== heading && !(n.nodeType === 1 && n.classList.contains('exercise-thumb')));
+
+          const table = makeSetTable(info.sets, info.reps, DEFAULT_WORK_SEC, DEFAULT_REST_SEC);
+          const img = ensureExercisePlaceholder(heading);
+
+          const newCard = document.createElement('div');
+          newCard.className = card.className;
+          newCard.appendChild(heading);
+          descNodes.forEach((n) => newCard.appendChild(n));
+          if (img) newCard.appendChild(img);
+          newCard.appendChild(table);
+
+          card.replaceWith(newCard);
+          heading.dataset.hasTable = '1';
+          attachExerciseSummary(heading, table);
+        }
+      });
+    }
+
+    enhanceExercisesWithSetTables();
+
+    function updateExerciseCompletion(table) {
+      const heading = getExerciseHeadingForTable(table);
+      if (!heading) return;
+      const boxes = Array.from(table.querySelectorAll('.set-done'));
+      if (!boxes.length) return;
+      const allChecked = boxes.every((b) => b.checked);
+      let badge = heading.querySelector('.exercise-done-badge');
+      if (allChecked) {
+        if (!badge) {
+          badge = document.createElement('span');
+          badge.className = 'exercise-done-badge';
+          badge.textContent = '✔ Completed';
+          heading.appendChild(badge);
+        }
+        heading.classList.add('exercise-done');
+      } else {
+        if (badge) badge.remove();
+        heading.classList.remove('exercise-done');
+      }
+      attachExerciseSummary(heading, table);
+    }
+
+    function enableSetCompletion() {
+      const refreshTable = (table) => {
+        if (!table) return;
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach((row) => {
+          const checkbox = row.querySelector('.set-done');
+          if (checkbox) {
+            row.classList.toggle('set-complete', checkbox.checked);
+          }
+        });
+        updateExerciseCompletion(table);
+      };
+
+      container.addEventListener('change', (e) => {
+        if (e.target.matches('.set-done')) {
+          const row = e.target.closest('tr');
+          if (row) {
+            row.classList.toggle('set-complete', e.target.checked);
+            refreshTable(row.closest('table'));
+            refreshSectionSummaries();
+          }
+        }
+      });
+
+      container.querySelectorAll('table.set-table').forEach((table) => {
+        refreshTable(table);
+        const heading = getExerciseHeadingForTable(table);
+        if (heading) {
+          attachExerciseSummary(heading, table);
+        }
+      });
+      refreshSectionSummaries();
+    }
+
+    enableSetCompletion();
+
+    function formatDurationShort(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      if (!secs) return `${mins}m`;
+      if (!mins) return `${secs}s`;
+      return `${mins}m ${secs}s`;
+    }
+
+    function formatMinutesFromSeconds(seconds) {
+      const total = Math.max(0, Math.round(seconds));
+      const h = Math.floor(total / 3600);
+      const m = Math.floor((total % 3600) / 60);
+      const s = total % 60;
+      const two = (v) => v.toString().padStart(2, '0');
+      if (h > 0) return `${h}:${two(m)}:${two(s)}`;
+      return `${m}:${two(s)}`;
+    }
+
+    function formatClock(seconds) {
+      return formatMinutesFromSeconds(seconds);
+    }
+
+    function refreshSectionSummaries() {
+      const parts = container.querySelectorAll('details.level-1, details.level-2, details.level-3');
+      parts.forEach((part) => {
+        const summaryEl = part.querySelector(':scope > summary');
+        if (!summaryEl) return;
+        const tables = part.querySelectorAll(':scope table.set-table');
+        const totalExercises = tables.length;
+        if (!totalExercises) {
+          const existing = summaryEl.querySelector('.summary-pill');
+          if (existing) existing.remove();
+          return;
+        }
+        let totalSets = 0;
+        let exercisesDone = 0;
+        let totalSeconds = 0;
+        let remainingSeconds = 0;
+        tables.forEach((table) => {
+          const rows = table.querySelectorAll('tbody tr');
+          const work = parseInt(table.dataset.workSeconds || DEFAULT_WORK_SEC, 10);
+          const rest = parseInt(table.dataset.restSeconds || DEFAULT_REST_SEC, 10);
+          const boxes = Array.from(table.querySelectorAll('.set-done'));
+          const doneSets = boxes.filter((b) => b.checked).length;
+          const setsCount = rows.length;
+          totalSets += setsCount;
+          totalSeconds += setsCount * (work + rest);
+          remainingSeconds += Math.max(setsCount - doneSets, 0) * (work + rest);
+          const allChecked = boxes.length === rows.length && boxes.every((b) => b.checked);
+          if (rows.length && allChecked) exercisesDone += 1;
+        });
+        const completedSeconds = Math.max(totalSeconds - remainingSeconds, 0);
+        const isDone = exercisesDone === totalExercises && totalExercises > 0;
+        const doneLabel = isDone ? 'Completed' : `Done ${exercisesDone}/${totalExercises}`;
+        renderPills(summaryEl, [
+          { text: doneLabel },
+          { text: `Sets ${totalSets}` },
+          { html: `<span class="text-green-700 font-semibold">${formatClock(completedSeconds)}</span>/${formatClock(totalSeconds)} (rem ${formatClock(remainingSeconds)})` },
+          { text: etaLabelFromSeconds(remainingSeconds) },
+        ]);
+        summaryEl.classList.toggle('summary-pill-done', isDone);
+        part.classList.toggle('section-done', isDone);
+      });
+    }
+
+    refreshSectionSummaries();
+
+    function startHotReload(intervalMs = 2000) {
+      let lastModified = null;
+      const check = () => {
+        fetch(window.location.href, { method: 'HEAD', cache: 'no-store' })
+          .then((res) => res.headers.get('last-modified'))
+          .then((lm) => {
+            if (!lm) return;
+            if (lastModified && lm !== lastModified) {
+              window.location.reload();
+            }
+            lastModified = lm;
+          })
+          .catch(() => {});
+      };
+      check();
+      setInterval(check, intervalMs);
+    }
+
+    startHotReload();
+
+    // Ensure everything opens for print
+    function openAll() {
+      document.querySelectorAll('details').forEach((d) => (d.open = true));
+    }
+    function closeAll() {
+      document.querySelectorAll('details').forEach((d) => {
+        const isTopLevel = d.closest('details') === null;
+        d.open = isTopLevel;
+      });
+    }
+
+    const mediaQueryList = window.matchMedia('print');
+    mediaQueryList.addEventListener('change', (event) => {
+      if (event.matches) openAll();
+    });
+    window.addEventListener('beforeprint', openAll);
+
+    document.getElementById('expandAll').addEventListener('click', openAll);
+    document.getElementById('collapseAll').addEventListener('click', closeAll);
+  </script>
+
+  <script type="module">
+    import { renderWorkout, defaultConfig } from './workout-renderer/dist/workout-renderer.js';
+    const solidRoot = document.getElementById('solid-render-root');
+    if (solidRoot) {
+      renderWorkout(solidRoot, defaultConfig);
+    }
+  </script>
+</body>
+</html>

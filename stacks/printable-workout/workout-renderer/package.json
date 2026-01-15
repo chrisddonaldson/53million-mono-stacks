@@ -1,0 +1,23 @@
+{
+  "name": "workout-renderer",
+  "version": "0.1.0",
+  "description": "SolidJS renderer for workout YAML configs",
+  "type": "module",
+  "main": "dist/workout-renderer.js",
+  "scripts": {
+    "build": "node scripts/generate-default-config.js && node scripts/build.js",
+    "generate": "node scripts/generate-default-config.js",
+    "serve": "node scripts/serve.js",
+    "test": "node scripts/run-tests.js"
+  },
+  "dependencies": {
+    "solid-js": "^1.8.7"
+  },
+  "devDependencies": {
+    "cypress": "^13.8.0",
+    "esbuild": "^0.20.2",
+    "esbuild-plugin-solid": "0.6.0",
+    "typescript": "^5.3.3",
+    "yaml": "^2.4.2"
+  }
+}

@@ -1,0 +1,1316 @@
+// Auto-generated from ../workout-yaml-package/data/upper-lower.yaml
+export default {
+  "metadata": {
+    "source": "../index.html",
+    "generated_at": "2026-01-15T15:19:00.924Z"
+  },
+  "workout_groups": [
+    {
+      "id": "upper",
+      "name": "Upper",
+      "workouts": [
+        {
+          "id": "forearms",
+          "name": "Forearms",
+          "group": "upper",
+          "tags": [
+            "upper"
+          ],
+          "subsections": [
+            {
+              "id": "hands-combo",
+              "name": "Hands (Combo)",
+              "notes": [],
+              "exercises": [
+                {
+                  "id": "rubber-finger-lever-holds",
+                  "name": "Rubber Finger Lever Holds",
+                  "thumbnail": "./media/Finger_Flexbar_Curl.jpg",
+                  "notes": [
+                    "2 × 30 reps (red band)",
+                    "Fingers fully open, slow control, no wrist movement"
+                  ],
+                  "prescription": "Purpose: Neural activation and extensor balance",
+                  "stage": "neural"
+                },
+                {
+                  "id": "thumb-opposition-press-plate-or-band",
+                  "name": "Thumb Opposition Press (Plate or Band)",
+                  "thumbnail": "./media/tumbopposition.png",
+                  "notes": [
+                    "Slow squeeze, thumb drives into fingers, no wrist bend"
+                  ],
+                  "prescription": "2 × 15–20",
+                  "sets": 2,
+                  "reps": "15–20",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "plate-pinch-hold-smooth-side-out",
+                  "name": "Plate Pinch Hold (Smooth Side Out)",
+                  "thumbnail": "./media/plate-pinch-984107551.jpg",
+                  "notes": [
+                    "Tall posture, shoulder packed, _no re-gripping_"
+                  ],
+                  "prescription": "2 × 30–40 s",
+                  "sets": 2,
+                  "reps": "30–40",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "wrist-neutral-grip-burnout-light-dbs",
+                  "name": "Wrist-Neutral Grip Burnout (Light DBs)",
+                  "thumbnail": "./media/neutral_grip_plate_wrist_curls.jpg",
+                  "notes": [
+                    "Neutral wrist, crush the handle, stop before form breaks"
+                  ],
+                  "prescription": "1–2 × AMRAP",
+                  "sets": 2,
+                  "reps": "AMRAP",
+                  "stage": "metabolic"
+                }
+              ],
+              "focus": "Finger extensors, intrinsic hand muscles, thumb strength, crush + pinch grip",
+              "role": "Neural activation → local endurance → connective-tissue resilience"
+            },
+            {
+              "id": "wrist-flexion",
+              "name": "Wrist Flexion",
+              "notes": [],
+              "exercises": [
+                {
+                  "id": "seated-dumbbell-wrist-curls",
+                  "name": "Seated Dumbbell Wrist Curls",
+                  "thumbnail": "./media/Seated Dumbell wrist curl.jpg",
+                  "notes": [
+                    "Controlled full ROM, deep stretch at bottom"
+                  ],
+                  "prescription": "2 × 15–20",
+                  "sets": 2,
+                  "reps": "15–20",
+                  "stage": "stability"
+                },
+                {
+                  "id": "barbell-wrist-flexion-low-pulley-or-barbell",
+                  "name": "Barbell Wrist Flexion (Low Pulley or Barbell)",
+                  "thumbnail": "./media/barbell wrist flexion.jpg",
+                  "notes": [
+                    "Constant tension, wrists only move"
+                  ],
+                  "prescription": "2 × 12–15",
+                  "sets": 2,
+                  "reps": "12–15",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "heavy-farmer-s-carries",
+                  "name": "Heavy Farmer’s Carries",
+                  "thumbnail": "./media/farmers-carry-kettlebell-487461920-1.jpg",
+                  "notes": [
+                    "Heavy load, upright posture, ribs down"
+                  ],
+                  "prescription": "3 × 30–40 m",
+                  "sets": 3,
+                  "reps": "30–40",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "wrist-curl-drop-set",
+                  "name": "Wrist Curl Drop Set",
+                  "thumbnail": "./media/barbell wrist flexion.jpg",
+                  "notes": [
+                    "Full ROM → partials → 20 s iso hold"
+                  ],
+                  "prescription": "1 extended set",
+                  "stage": "stability"
+                }
+              ],
+              "focus": "Finger flexors, wrist flexors, carryover to pulling & pressing"
+            },
+            {
+              "id": "wrist-extension",
+              "name": "Wrist Extension",
+              "notes": [],
+              "exercises": [
+                {
+                  "id": "seated-dumbbell-wrist-extensions",
+                  "name": "Seated Dumbbell Wrist Extensions",
+                  "thumbnail": "./media/dumbbell-reverse-wrist-curls-jan22-1024x576-2003626446.jpg",
+                  "notes": [
+                    "Slow, controlled, pause briefly at top"
+                  ],
+                  "prescription": "2 × 15–20",
+                  "sets": 2,
+                  "reps": "15–20",
+                  "stage": "stability"
+                },
+                {
+                  "id": "barbell-wrist-extensions",
+                  "name": "Barbell Wrist Extensions",
+                  "thumbnail": "./media/reverser wrist crrl.jpg",
+                  "notes": [
+                    "Constant tension, no elbow movement"
+                  ],
+                  "prescription": "2 × 12–15",
+                  "sets": 2,
+                  "reps": "12–15",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "controlled-wrist-deviations-radial-ulnar",
+                  "name": "Controlled Wrist Deviations (Radial & Ulnar)",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Pasted%20image%2020260109070043.png",
+                  "notes": [
+                    "https://www.youtube.com/watch?v=AvLZWd4udxg",
+                    "Light load, strict control, small ROM"
+                  ],
+                  "prescription": "2 × 12–15 / side",
+                  "sets": 2,
+                  "reps": "12–15",
+                  "video": "https://www.youtube.com/watch?v=AvLZWd4udxg",
+                  "stage": "stability"
+                },
+                {
+                  "id": "reverse-ez-bar-curls",
+                  "name": "Reverse EZ-Bar Curls",
+                  "thumbnail": "./media/reverse ez bar curl.jpg",
+                  "notes": [
+                    "Heavy, controlled eccentric, wrists neutral"
+                  ],
+                  "prescription": "3 × 6–10",
+                  "sets": 3,
+                  "reps": "6–10",
+                  "stage": "stability"
+                }
+              ],
+              "focus": "Extensors, elbow health, grip balance, tendon durability"
+            }
+          ]
+        },
+        {
+          "id": "upper-arm",
+          "name": "Upper Arm",
+          "group": "upper",
+          "tags": [
+            "upper"
+          ],
+          "subsections": [
+            {
+              "id": "biceps",
+              "name": "Biceps",
+              "notes": [],
+              "exercises": [
+                {
+                  "id": "preacher-curl-machine-or-ez-bar",
+                  "name": "Preacher Curl (Machine or EZ-Bar)",
+                  "thumbnail": "./media/preacher-curl-1000x1000-4233788383.jpg",
+                  "notes": [
+                    "Upper arm fixed, stop short of lockout",
+                    "_At-home (DB/BB):_ DB preacher curl over incline bench or arm braced on thigh"
+                  ],
+                  "prescription": "2 × 12–15",
+                  "sets": 2,
+                  "reps": "12–15",
+                  "at_home": "_ DB preacher curl over incline bench or arm braced on thigh",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "cross-body-hammer-curl",
+                  "name": "Cross-Body Hammer Curl",
+                  "thumbnail": "./media/cross body hammer curl.png",
+                  "notes": [
+                    "Neutral grip, elbow tight",
+                    "_At-home (DB/BB):_ Cross-body DB hammer curl (same movement)"
+                  ],
+                  "prescription": "1–2 × 20 alternating",
+                  "sets": 2,
+                  "reps": "20",
+                  "at_home": "_ Cross-body DB hammer curl (same movement)",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "ez-bar-curl-standing",
+                  "name": "EZ-Bar Curl (Standing)",
+                  "thumbnail": "./media/ex bar curls.jpg",
+                  "notes": [
+                    "Controlled eccentric, no hip drive",
+                    "_At-home (DB/BB):_ Straight-bar barbell curl"
+                  ],
+                  "prescription": "3 × 6–8",
+                  "sets": 3,
+                  "reps": "6–8",
+                  "at_home": "_ Straight-bar barbell curl",
+                  "stage": "stability"
+                },
+                {
+                  "id": "cable-curl-mechanical-drop-set",
+                  "name": "Cable Curl Mechanical Drop Set",
+                  "thumbnail": "./media/cable curl.jpg",
+                  "notes": [
+                    "Standing → step-forward → top-range pulses",
+                    "_At-home (DB/BB):_ DB curl → incline DB curl → top-range pulses"
+                  ],
+                  "prescription": "1–2 rounds",
+                  "at_home": "_ DB curl → incline DB curl → top-range pulses",
+                  "stage": "mechanical"
+                }
+              ]
+            },
+            {
+              "id": "rotator-cuff",
+              "name": "Rotator Cuff",
+              "notes": [],
+              "exercises": [
+                {
+                  "id": "external-rotation-band-or-cable-elbow-at-side",
+                  "name": "External Rotation (Band or Cable, Elbow at Side)",
+                  "thumbnail": "./media/external-cable-rotation-2607682008.jpg",
+                  "notes": [
+                    "Elbow pinned, slow control",
+                    "_At-home (DB/BB):_ Side-lying dumbbell external rotation"
+                  ],
+                  "prescription": "2 × 12–15",
+                  "sets": 2,
+                  "reps": "12–15",
+                  "at_home": "_ Side-lying dumbbell external rotation",
+                  "stage": "stability"
+                },
+                {
+                  "id": "internal-rotation-band-or-cable-elbow-at-side",
+                  "name": "Internal Rotation (Band or Cable, Elbow at Side)",
+                  "thumbnail": "./media/internal rotation.jpg",
+                  "notes": [
+                    "Tall posture, shoulder stays back",
+                    "_At-home (DB/BB):_ Side-lying internal rotation (light DB)"
+                  ],
+                  "prescription": "2 × 12–15",
+                  "sets": 2,
+                  "reps": "12–15",
+                  "at_home": "_ Side-lying internal rotation (light DB)",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "external-rotation-at-90-degrees-band-or-cable",
+                  "name": "External Rotation at 90 Degrees (Band or Cable)",
+                  "thumbnail": "./media/tband-shld-ext-rot-90__635919246741088096_4-3002005634.jpg",
+                  "notes": [
+                    "Long eccentric, no shrug",
+                    "_At-home (DB/BB):_ Seated DB 90° external rotation (very light)"
+                  ],
+                  "prescription": "2 × 8–10",
+                  "sets": 2,
+                  "reps": "8–10",
+                  "at_home": "_ Seated DB 90° external rotation (very light)",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "overhead-iso-hold-plate-or-dbs",
+                  "name": "Overhead Iso Hold (Plate or DBs)",
+                  "thumbnail": "./media/BrazilianPlatHold.jpg",
+                  "notes": [
+                    "Ribs down, steady breathing",
+                    "_At-home (DB/BB):_ Single-arm DB overhead hold"
+                  ],
+                  "prescription": "2 × 30–40 s",
+                  "sets": 2,
+                  "reps": "30–40",
+                  "at_home": "_ Single-arm DB overhead hold",
+                  "stage": "stability"
+                }
+              ]
+            },
+            {
+              "id": "shoulders",
+              "name": "Shoulders",
+              "notes": [],
+              "exercises": [
+                {
+                  "id": "lean-away-cable-lateral-raise",
+                  "name": "Lean-Away Cable Lateral Raise",
+                  "thumbnail": "./media/lean_away_lateral_raises.jpg",
+                  "notes": [
+                    "Lead with elbow, no swing",
+                    "_At-home (DB/BB):_ Lean-away DB lateral raise (hold rack or door frame)"
+                  ],
+                  "prescription": "3 × 12–15",
+                  "sets": 3,
+                  "reps": "12–15",
+                  "at_home": "_ Lean-away DB lateral raise (hold rack or door frame)",
+                  "stage": "stability"
+                },
+                {
+                  "id": "chest-supported-rear-delt-fly",
+                  "name": "Chest-Supported Rear Delt Fly",
+                  "thumbnail": "./media/rear-delt-fly-2748130636.jpg",
+                  "notes": [
+                    "Strict, zero momentum",
+                    "_At-home (DB/BB):_ Incline-bench DB rear delt fly"
+                  ],
+                  "prescription": "2 × 15–20",
+                  "sets": 2,
+                  "reps": "15–20",
+                  "at_home": "_ Incline-bench DB rear delt fly",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "machine-shoulder-press",
+                  "name": "Machine Shoulder Press",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Exercise%2F200_Bodybuilding%2Fv1%2Fmedia%2Fshoul",
+                  "notes": [
+                    "Stop short of lockout",
+                    "_At-home (DB/BB):_ Seated DB shoulder press or standing barbell OHP"
+                  ],
+                  "prescription": "3 × 6–10",
+                  "sets": 3,
+                  "reps": "6–10",
+                  "at_home": "_ Seated DB shoulder press or standing barbell OHP",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "cable-lateral-raise-mechanical-drop-set",
+                  "name": "Cable Lateral Raise Mechanical Drop Set",
+                  "thumbnail": "./media/lean_away_lateral_raises.jpg",
+                  "notes": [
+                    "Full → top partials → bottom partials",
+                    "_At-home (DB/BB):_ DB lateral raise → partials → cheat-controlled partials"
+                  ],
+                  "prescription": "1 extended set",
+                  "at_home": "_ DB lateral raise → partials → cheat-controlled partials",
+                  "stage": "stability"
+                }
+              ]
+            },
+            {
+              "id": "triceps",
+              "name": "Triceps",
+              "notes": [],
+              "exercises": [
+                {
+                  "id": "single-arm-cable-overhead-extension",
+                  "name": "Single-Arm Cable Overhead Extension",
+                  "thumbnail": "./media/tricep_extentsion.jpg",
+                  "notes": [
+                    "Light, full stretch, ribs down",
+                    "_At-home (DB/BB):_ Single-DB overhead triceps extension"
+                  ],
+                  "prescription": "2 × 12–15 / arm",
+                  "sets": 2,
+                  "reps": "12–15",
+                  "at_home": "_ Single-DB overhead triceps extension",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "cable-pressdown-neutral-grip",
+                  "name": "Cable Pressdown (Neutral Grip)",
+                  "thumbnail": "./media/trice-pushdown-benefits-4292198477.png",
+                  "notes": [
+                    "Elbows pinned, squeeze lockout",
+                    "_At-home (DB/BB):_ Close-grip DB floor press"
+                  ],
+                  "prescription": "2 × 15",
+                  "sets": 2,
+                  "reps": "15",
+                  "at_home": "_ Close-grip DB floor press",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "close-grip-bench-press",
+                  "name": "Close-Grip Bench Press",
+                  "thumbnail": "./media/close-grip-bench-press-howto-2-800-4027774772.jpg",
+                  "notes": [
+                    "Grip just inside shoulders, drive to lockout",
+                    "_At-home (DB/BB):_ Barbell close-grip bench or DB close-grip press"
+                  ],
+                  "prescription": "3 × 4–6",
+                  "sets": 3,
+                  "reps": "4–6",
+                  "at_home": "_ Barbell close-grip bench or DB close-grip press",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "cable-rope-pressdown-extended-set",
+                  "name": "Cable Rope Pressdown (Extended Set)",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Exercise%2F200_Bodybuilding%2Fv1%2Fmedia%2Fcable",
+                  "notes": [
+                    "Short rest, hard lockouts",
+                    "_At-home (DB/BB):_ DB kickbacks → partials"
+                  ],
+                  "prescription": "2 × 12–15 + partials",
+                  "sets": 2,
+                  "reps": "12–15",
+                  "at_home": "_ DB kickbacks → partials",
+                  "stage": "metabolic"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "torso",
+          "name": "Torso",
+          "group": "upper",
+          "tags": [
+            "upper"
+          ],
+          "subsections": [
+            {
+              "id": "chest-upper-bias-controlled-pressing",
+              "name": "Chest (Upper Bias, Controlled Pressing)",
+              "notes": [],
+              "exercises": [
+                {
+                  "id": "low-incline-cable-fly-30",
+                  "name": "Low-Incline Cable Fly (≈30°)",
+                  "thumbnail": "./media/cable-low-fly-1130179404.jpg",
+                  "notes": [
+                    "Slow squeeze, ribs down",
+                    "Why: Clean pec activation with rib control"
+                  ],
+                  "prescription": "2 × 12–15",
+                  "sets": 2,
+                  "reps": "12–15",
+                  "stage": "neural"
+                },
+                {
+                  "id": "machine-chest-press-light-controlled",
+                  "name": "Machine Chest Press (Light, Controlled)",
+                  "thumbnail": "./media/machine bench.jpg",
+                  "notes": [
+                    "Chest-driven reps",
+                    "Why: Grooves pressing pattern without joint fatigue"
+                  ],
+                  "prescription": "2 × 12–15",
+                  "sets": 2,
+                  "reps": "12–15",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "barbell-incline-bench-press",
+                  "name": "Barbell Incline Bench Press",
+                  "thumbnail": "./media/inlcine press.jpg",
+                  "notes": [
+                    "Upper-chest focus, stable arch",
+                    "Why: Primary mechanical tension driver"
+                  ],
+                  "prescription": "3 × 5–8",
+                  "sets": 3,
+                  "reps": "5–8",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "cable-fly-mechanical-drop-set-high-mid-low",
+                  "name": "Cable Fly Mechanical Drop Set (High → Mid → Low)",
+                  "thumbnail": "./media/cable files.jpg",
+                  "notes": [
+                    "Why: Continuous-tension hypertrophy finisher with minimal shoulder stress"
+                  ],
+                  "prescription": "1 round × 10–12 each",
+                  "stage": "metabolic"
+                }
+              ]
+            },
+            {
+              "id": "upper-back-scapulae-mid-traps-serratus",
+              "name": "Upper Back (Scapulae, Mid Traps, Serratus)",
+              "notes": [],
+              "exercises": [
+                {
+                  "id": "cable-serratus-punch",
+                  "name": "Cable Serratus Punch",
+                  "thumbnail": "./media/cable serratus punch.jpg",
+                  "notes": [
+                    "Ribs down, reach long",
+                    "Why: Restores serratus intent and scapular protraction without elbow noise"
+                  ],
+                  "prescription": "2 × 12–15",
+                  "sets": 2,
+                  "reps": "12–15",
+                  "stage": "neural"
+                },
+                {
+                  "id": "prone-incline-y-raise",
+                  "name": "Prone Incline Y-Raise",
+                  "thumbnail": "./media/prone-y-raise-1024x538-4151053179.jpg",
+                  "notes": [
+                    "Scapulae pulled down, long arms",
+                    "Why: High-quality scapular control in upward rotation"
+                  ],
+                  "prescription": "2 × 10–12",
+                  "sets": 2,
+                  "reps": "10–12",
+                  "stage": "stability"
+                },
+                {
+                  "id": "chest-supported-row-3-s-retraction-hold",
+                  "name": "Chest-Supported Row (3 s Retraction Hold)",
+                  "thumbnail": "./media/chest supported roww.jpg",
+                  "notes": [
+                    "No shrug",
+                    "Why: Primary mechanical tension for mid traps and rhomboids",
+                    "NOTE: Trap bar?"
+                  ],
+                  "prescription": "3 × 8–10 + 3 s hold",
+                  "sets": 3,
+                  "reps": "8–10",
+                  "stage": "stability"
+                },
+                {
+                  "id": "cable-shrug-mechanical-drop-set",
+                  "name": "Cable Shrug Mechanical Drop Set",
+                  "thumbnail": "./media/Cable-Shrugs-1-1158807454.jpg",
+                  "notes": [
+                    "Full ROM → partials → iso",
+                    "Why: High-output upper-back finisher without spinal loading"
+                  ],
+                  "prescription": "1 extended set",
+                  "stage": "stability"
+                }
+              ]
+            },
+            {
+              "id": "lats-depression-adduction-sweep",
+              "name": "Lats (Depression, Adduction, Sweep)",
+              "notes": [],
+              "exercises": [
+                {
+                  "id": "scapular-pull-ups-depression-only",
+                  "name": "Scapular Pull-Ups (Depression Only)",
+                  "thumbnail": "./media/scapular-pull-up-muscles-768x753-2777257610.png",
+                  "notes": [
+                    "Arms straight",
+                    "Why: Teaches lat-driven scapular depression before elbow flexion"
+                  ],
+                  "prescription": "2 × 6–10",
+                  "sets": 2,
+                  "reps": "6–10",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "single-arm-cable-lat-sweep-low-high",
+                  "name": "Single-Arm Cable Lat Sweep (Low → High)",
+                  "thumbnail": "./media/cable-one-arm-lat-pulldown.webp",
+                  "notes": [
+                    "Elbow to hip, no torso shift",
+                    "Why: Length awareness with unilateral path control"
+                  ],
+                  "prescription": "2 × 12–14 / side",
+                  "sets": 2,
+                  "reps": "12–14",
+                  "stage": "stability"
+                },
+                {
+                  "id": "pull-ups-weighted-or-assisted",
+                  "name": "Pull-Ups (Weighted or Assisted)",
+                  "thumbnail": "./media/pull-up-variations-2814564598.jpg",
+                  "notes": [
+                    "Elbows down and in",
+                    "Why: Highest mechanical tension across a long ROM"
+                  ],
+                  "prescription": "3 × 6–8",
+                  "sets": 3,
+                  "reps": "6–8",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "wide-grip-lat-pulldown-mechanical-drop-set",
+                  "name": "Wide-Grip Lat Pulldown Mechanical Drop Set",
+                  "thumbnail": "./media/wide grip lat pulldown.jpg",
+                  "notes": [
+                    "Why: Lat-dominant metabolic stress without grip or lower-back limits"
+                  ],
+                  "prescription": "1 extended set (wide → mid → narrow)",
+                  "stage": "metabolic"
+                }
+              ]
+            },
+            {
+              "id": "neck-flexion-extension-lateral-stability",
+              "name": "Neck (Flexion, Extension, Lateral Stability)",
+              "notes": [],
+              "exercises": [
+                {
+                  "id": "supine-chin-tuck",
+                  "name": "Supine Chin Tuck",
+                  "thumbnail": "./media/Supine Chin Tuck.jpg",
+                  "notes": [
+                    "Slow tuck with brief hold",
+                    "Why: Deep cervical flexor activation and posture reset"
+                  ],
+                  "prescription": "2 × 8–10",
+                  "sets": 2,
+                  "reps": "8–10",
+                  "stage": "neural"
+                },
+                {
+                  "id": "neck-extension-machine-plate-cable",
+                  "name": "Neck Extension (Machine / Plate / Cable)",
+                  "thumbnail": "./media/Neck Extensions.jpg",
+                  "notes": [
+                    "Controlled arc",
+                    "Why: Primary mechanical loading for posterior neck"
+                  ],
+                  "prescription": "3 × 8–12",
+                  "sets": 3,
+                  "reps": "8–12",
+                  "stage": "stability"
+                },
+                {
+                  "id": "neck-flexion-machine-plate-cable",
+                  "name": "Neck Flexion (Machine / Plate / Cable)",
+                  "thumbnail": "./media/Weighted-Neck-Flexion-1410979488.jpg",
+                  "notes": [
+                    "Controlled arc",
+                    "Why: Primary mechanical loading for posterior neck"
+                  ],
+                  "prescription": "3 × 8–12",
+                  "sets": 3,
+                  "reps": "8–12",
+                  "stage": "stability"
+                },
+                {
+                  "id": "4-way-band-isometric-series",
+                  "name": "4-Way Band Isometric Series",
+                  "thumbnail": "./media/CableNeckIsoHolds.jpg",
+                  "notes": [
+                    "Why: Balanced metabolic and endurance finish across all planes"
+                  ],
+                  "prescription": "1 round × 20–30 s each direction",
+                  "reps": "20-30 s",
+                  "stage": "stability"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lower",
+      "name": "Lower",
+      "workouts": [
+        {
+          "id": "waist",
+          "name": "Waist",
+          "group": "lower",
+          "tags": [
+            "lower"
+          ],
+          "subsections": [
+            {
+              "id": "abdominals",
+              "name": "Abdominals",
+              "notes": [],
+              "exercises": [
+                {
+                  "id": "cable-kneeling-crunch-short-range",
+                  "name": "Cable Kneeling Crunch (Short Range)",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Cable%20Kneeling%20Crunch%20(Short%20Range)",
+                  "notes": [
+                    "Slow exhale, ribs down",
+                    "Why: Direct rectus activation without hip-flexor dominance"
+                  ],
+                  "prescription": "2 × 12–15",
+                  "sets": 2,
+                  "reps": "12–15",
+                  "stage": "neural"
+                },
+                {
+                  "id": "dead-bug-w-band-or-cable-pulldown",
+                  "name": "Dead Bug w/ Band or Cable Pulldown",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Dead%20Bug%20w%2F%20Band%20or%20Cable%20Pulldown",
+                  "notes": [
+                    "Exhale → brace",
+                    "Why: Anti-extension control with unilateral coordination"
+                  ],
+                  "prescription": "2 × 6–8 / side",
+                  "sets": 2,
+                  "reps": "6–8",
+                  "stage": "stability"
+                },
+                {
+                  "id": "weighted-floor-or-decline-sit-up",
+                  "name": "Weighted Floor or Decline Sit-Up",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Weighted%20Floor%20or%20Decline%20Sit-Up",
+                  "notes": [
+                    "Slow curl, no momentum",
+                    "Why: Primary mechanical tension for the abdominals"
+                  ],
+                  "prescription": "3 × 6–8",
+                  "sets": 3,
+                  "reps": "6–8",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "hanging-knee-raise-posterior-tilt",
+                  "name": "Hanging Knee Raise (Posterior Tilt)",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Hanging%20Knee%20Raise%20(Posterior%20Tilt)",
+                  "notes": [
+                    "Pelvis curls up, no swing",
+                    "Why: High-output metabolic finisher when fatigue tolerance is high"
+                  ],
+                  "prescription": "2 × AMRAP",
+                  "sets": 2,
+                  "reps": "AMRAP",
+                  "stage": "metabolic"
+                }
+              ]
+            },
+            {
+              "id": "hip-flexors",
+              "name": "Hip Flexors",
+              "notes": [
+                "Note:** Hanging knee raises are intentionally excluded here to limit crossover fatigue into abdominal work"
+              ],
+              "exercises": [
+                {
+                  "id": "supine-banded-hip-flexion-90-knee",
+                  "name": "Supine Banded Hip Flexion (90° Knee)",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Supine%20Banded%20Hip%20Flexion%20(90%C2%B0%20Knee)",
+                  "notes": [
+                    "Slow tempo, ribs down",
+                    "Why: Clean neural activation without spinal noise or momentum"
+                  ],
+                  "prescription": "2 × 10 / side",
+                  "sets": 2,
+                  "reps": "10",
+                  "stage": "neural"
+                },
+                {
+                  "id": "half-kneeling-cable-hip-flexion",
+                  "name": "Half-Kneeling Cable Hip Flexion",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Half-Kneeling%20Cable%20Hip%20Flexion",
+                  "notes": [
+                    "Glute squeeze, no torso shift",
+                    "Why: Unilateral control with pelvic discipline in a lengthened range"
+                  ],
+                  "prescription": "2 × 8 / side",
+                  "sets": 2,
+                  "reps": "8",
+                  "stage": "stability"
+                },
+                {
+                  "id": "standing-cable-hip-flexion",
+                  "name": "Standing Cable Hip Flexion",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Standing%20Cable%20Hip%20Flexion",
+                  "notes": [
+                    "Stacked ribs, controlled eccentric",
+                    "Why: Highest safe mechanical tension for the hip flexors"
+                  ],
+                  "prescription": "3 × 8",
+                  "sets": 3,
+                  "reps": "8",
+                  "stage": "stability"
+                },
+                {
+                  "id": "bench-supported-hip-flexion-burnout",
+                  "name": "Bench-Supported Hip Flexion Burnout",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Bench-Supported%20Hip%20Flexion%20Burnout",
+                  "notes": [
+                    "Short ROM, pelvis frozen",
+                    "Why: Local metabolic fatigue without grip or swing limits"
+                  ],
+                  "prescription": "1 × 45 s",
+                  "sets": 1,
+                  "reps": "45",
+                  "stage": "metabolic"
+                }
+              ]
+            },
+            {
+              "id": "lower-back-deep-spinal-control",
+              "name": "Lower Back / Deep Spinal Control",
+              "notes": [
+                "Note:** RDLs are deliberately excluded so lower-back work stays _waist-centric_, not posterior-chain dominant"
+              ],
+              "exercises": [
+                {
+                  "id": "quadruped-cat-segmental-neutral-control",
+                  "name": "Quadruped Cat → Segmental Neutral Control",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Quadruped%20Cat%20%E2%86%92%20Segmental%20Neutral%20Contro",
+                  "notes": [
+                    "5–1–5 tempo",
+                    "Why: Re-establishes spinal intent before loading"
+                  ],
+                  "prescription": "2 × 5 slow reps",
+                  "sets": 2,
+                  "reps": "5",
+                  "stage": "neural"
+                },
+                {
+                  "id": "cable-anti-rotation-hold-tall-kneeling",
+                  "name": "Cable Anti-Rotation Hold (Tall-Kneeling)",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Cable%20Anti-Rotation%20Hold%20(Tall-Kneeling)",
+                  "notes": [
+                    "No hip shift",
+                    "Why: Anti-rotation stability without lumbar motion"
+                  ],
+                  "prescription": "2 × 20–30 s / side",
+                  "sets": 2,
+                  "reps": "20–30",
+                  "stage": "stability"
+                },
+                {
+                  "id": "chest-supported-back-extension-weighted",
+                  "name": "Chest-Supported Back Extension (Weighted)",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Chest-Supported%20Back%20Extension%20(Weighted",
+                  "notes": [
+                    "Reach long, stop at neutral",
+                    "Why: Mechanical tension for spinal extensors with zero shear"
+                  ],
+                  "prescription": "2 × 10–12",
+                  "sets": 2,
+                  "reps": "10–12",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "sorensen-hold",
+                  "name": "Sorensen Hold",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Sorensen%20Hold",
+                  "notes": [
+                    "Breathe under tension",
+                    "Why: End-range isometric endurance that ties everything together"
+                  ],
+                  "prescription": "1–2 × 30–45 s",
+                  "sets": 2,
+                  "reps": "30–45",
+                  "stage": "stability"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "thighs",
+          "name": "Thighs",
+          "group": "lower",
+          "tags": [
+            "lower"
+          ],
+          "subsections": [
+            {
+              "id": "quads",
+              "name": "Quads",
+              "notes": [],
+              "exercises": [
+                {
+                  "id": "seated-leg-extension",
+                  "name": "Seated Leg Extension",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Seated%20Leg%20Extension",
+                  "notes": [
+                    "4–1–2–1 tempo, hard lockout",
+                    "Why: Pure quad neural activation and tendon preparation"
+                  ],
+                  "prescription": "2 × 12–15",
+                  "sets": 2,
+                  "reps": "12–15",
+                  "stage": "neural"
+                },
+                {
+                  "id": "slow-step-down",
+                  "name": "Slow Step-Down",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Slow%20Step-Down",
+                  "notes": [
+                    "5 s eccentric",
+                    "Why: Unilateral knee control with strong VMO engagement"
+                  ],
+                  "prescription": "2 × 6–8 / side",
+                  "sets": 2,
+                  "reps": "6–8",
+                  "stage": "stability"
+                },
+                {
+                  "id": "hack-squat",
+                  "name": "Hack Squat",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Hack%20Squat",
+                  "notes": [
+                    "Knee-dominant depth",
+                    "Why: Safest way to apply heavy quad mechanical tension"
+                  ],
+                  "prescription": "3 × 6–8",
+                  "sets": 3,
+                  "reps": "6–8",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "leg-extension-drop-set",
+                  "name": "Leg Extension Drop Set",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Leg%20Extension%20Drop%20Set",
+                  "notes": [
+                    "No rest",
+                    "Why: Quad-specific metabolic overload with minimal joint risk"
+                  ],
+                  "prescription": "1–2 rounds: 10–12 → top-range partials",
+                  "stage": "metabolic"
+                }
+              ]
+            },
+            {
+              "id": "adductors",
+              "name": "Adductors",
+              "notes": [],
+              "exercises": [
+                {
+                  "id": "seated-adductor-machine",
+                  "name": "Seated Adductor Machine",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Seated%20Adductor%20Machine",
+                  "notes": [
+                    "1–2 s squeeze at peak",
+                    "Why: Direct neural recruitment; teaches adductor intent"
+                  ],
+                  "prescription": "2 × 12–15",
+                  "sets": 2,
+                  "reps": "12–15",
+                  "stage": "neural"
+                },
+                {
+                  "id": "copenhagen-side-plank",
+                  "name": "Copenhagen Side Plank",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Copenhagen%20Side%20Plank",
+                  "notes": [
+                    "Hips stacked, ribs down",
+                    "Why: Unilateral isometric strength and pelvic integrity"
+                  ],
+                  "prescription": "2 × 20–30 s / side",
+                  "sets": 2,
+                  "reps": "20–30",
+                  "stage": "stability"
+                },
+                {
+                  "id": "wide-stance-barbell-squat",
+                  "name": "Wide-Stance Barbell Squat",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Wide-Stance%20Barbell%20Squat",
+                  "notes": [
+                    "Toes slightly out, “pull feet inward”",
+                    "Why: Heavy adductor-loaded tension under load"
+                  ],
+                  "prescription": "3 × 4–6",
+                  "sets": 3,
+                  "reps": "4–6",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "adductor-machine-burnout",
+                  "name": "Adductor Machine Burnout",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Adductor%20Machine%20Burnout",
+                  "notes": [
+                    "Constant tension, no lockout rest",
+                    "Why: Safe but brutal metabolic finish"
+                  ],
+                  "prescription": "2 × 20–25",
+                  "sets": 2,
+                  "reps": "20–25",
+                  "stage": "metabolic"
+                }
+              ]
+            },
+            {
+              "id": "hamstrings",
+              "name": "Hamstrings",
+              "notes": [],
+              "exercises": [
+                {
+                  "id": "seated-leg-curl-machine",
+                  "name": "Seated Leg Curl (Machine)",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Seated%20Leg%20Curl%20(Machine)",
+                  "notes": [
+                    "Slow eccentrics, full stretch",
+                    "Why: Pure knee-flexion neural activation; primes hamstrings without spinal fatigue"
+                  ],
+                  "prescription": "2 × 12–15",
+                  "sets": 2,
+                  "reps": "12–15",
+                  "stage": "neural"
+                },
+                {
+                  "id": "single-leg-romanian-deadlift-db-or-cable",
+                  "name": "Single-Leg Romanian Deadlift (DB or Cable)",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Single-Leg%20Romanian%20Deadlift%20(DB%20or%20Cabl",
+                  "notes": [
+                    "Square hips, long-range control",
+                    "Why: Unilateral length awareness and pelvic control"
+                  ],
+                  "prescription": "2 × 8–10 / side",
+                  "sets": 2,
+                  "reps": "8–10",
+                  "stage": "stability"
+                },
+                {
+                  "id": "barbell-romanian-deadlift",
+                  "name": "Barbell Romanian Deadlift",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Barbell%20Romanian%20Deadlift",
+                  "notes": [
+                    "Heavy hinge, bar stays close",
+                    "Why: Primary mechanical tension driver for hamstrings"
+                  ],
+                  "prescription": "3 × 6–8",
+                  "sets": 3,
+                  "reps": "6–8",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "seated-leg-curl-drop-set",
+                  "name": "Seated Leg Curl (Drop Set)",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Seated%20Leg%20Curl%20(Drop%20Set)",
+                  "notes": [
+                    "Continuous reps, no rest",
+                    "Why: Hamstring-safe metabolic finisher without axial load"
+                  ],
+                  "prescription": "1–2 rounds: 15 → AMRAP",
+                  "stage": "metabolic"
+                }
+              ]
+            },
+            {
+              "id": "glutes",
+              "name": "Glutes",
+              "notes": [],
+              "exercises": [
+                {
+                  "id": "cable-hip-abduction",
+                  "name": "Cable Hip Abduction",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Cable%20Hip%20Abduction",
+                  "notes": [
+                    "Hard pause at top",
+                    "Why: Glute med neural priming and lateral control"
+                  ],
+                  "prescription": "2 × 15 / side",
+                  "sets": 2,
+                  "reps": "15",
+                  "stage": "neural"
+                },
+                {
+                  "id": "bulgarian-split-squat-glute-bias",
+                  "name": "Bulgarian Split Squat (Glute Bias)",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Bulgarian%20Split%20Squat%20(Glute%20Bias)",
+                  "notes": [
+                    "Long stride, slight forward lean",
+                    "Why: Unilateral stability with lengthened glute loading"
+                  ],
+                  "prescription": "2 × 8–10 / side",
+                  "sets": 2,
+                  "reps": "8–10",
+                  "stage": "stability"
+                },
+                {
+                  "id": "barbell-hip-thrust",
+                  "name": "Barbell Hip Thrust",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Barbell%20Hip%20Thrust",
+                  "notes": [
+                    "Full lockout, ribs down",
+                    "Why: Maximum mechanical tension in the shortened position"
+                  ],
+                  "prescription": "3 × 6–8",
+                  "sets": 3,
+                  "reps": "6–8",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "seated-hip-abduction-machine",
+                  "name": "Seated Hip Abduction Machine",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Seated%20Hip%20Abduction%20Machine",
+                  "notes": [
+                    "Torso forward, continuous reps",
+                    "Why: Metabolic burn without spinal fatigue"
+                  ],
+                  "prescription": "2 × 20",
+                  "sets": 2,
+                  "reps": "20",
+                  "stage": "metabolic"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "shank",
+          "name": "Shank",
+          "group": "lower",
+          "tags": [
+            "lower"
+          ],
+          "subsections": [
+            {
+              "id": "feet",
+              "name": "Feet",
+              "notes": [],
+              "exercises": [
+                {
+                  "id": "short-foot-arch-doming",
+                  "name": "Short Foot (Arch Doming)",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Short%20Foot%20(Arch%20Doming)",
+                  "notes": [
+                    "Barefoot, toes relaxed, lift arch without curling"
+                  ],
+                  "prescription": "2 × 8–10 holds (5–8 s)",
+                  "sets": 2,
+                  "reps": "8–10",
+                  "stage": "stability"
+                },
+                {
+                  "id": "toe-yoga-big-vs-lesser-toes",
+                  "name": "Toe Yoga (Big vs Lesser Toes)",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Toe%20Yoga%20(Big%20vs%20Lesser%20Toes)",
+                  "notes": [
+                    "Slow, clean separation, no ankle movement"
+                  ],
+                  "prescription": "2 × 8–10 / pattern",
+                  "sets": 2,
+                  "reps": "8–10",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "single-leg-balance-short-foot",
+                  "name": "Single-Leg Balance + Short Foot",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Single-Leg%20Balance%20%2B%20Short%20Foot",
+                  "notes": [
+                    "Arch active, knee tracks over 2nd toe"
+                  ],
+                  "prescription": "2 × 30 s / side",
+                  "sets": 2,
+                  "reps": "30",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "farmer-s-carry-on-toes",
+                  "name": "Farmer’s Carry on Toes",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Farmer%E2%80%99s%20Carry%20on%20Toes",
+                  "notes": [
+                    "Slow steps, tall posture, no ankle collapse"
+                  ],
+                  "prescription": "2 × 20–30 m",
+                  "sets": 2,
+                  "reps": "20–30",
+                  "stage": "mechanical"
+                }
+              ],
+              "focus": "Intrinsic foot muscles, arch control, ankle–knee alignment",
+              "role": "Stability foundation for tibialis, calves, and knee health"
+            },
+            {
+              "id": "tibialis",
+              "name": "Tibialis",
+              "notes": [],
+              "exercises": [
+                {
+                  "id": "wall-supported-tibialis-raise",
+                  "name": "Wall-Supported Tibialis Raise",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Wall-Supported%20Tibialis%20Raise",
+                  "notes": [
+                    "Heels planted, slow eccentric"
+                  ],
+                  "prescription": "2 × 15",
+                  "sets": 2,
+                  "reps": "15",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "kettlebell-tib-bar-raise",
+                  "name": "Kettlebell Tib Bar Raise",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Kettlebell%20Tib%20Bar%20Raise",
+                  "notes": [
+                    "Controlled tempo, full dorsiflexion"
+                  ],
+                  "prescription": "2 × 12–15",
+                  "sets": 2,
+                  "reps": "12–15",
+                  "stage": "stability"
+                },
+                {
+                  "id": "heavy-kettlebell-tib-bar-raise",
+                  "name": "Heavy Kettlebell Tib Bar Raise",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Heavy%20Kettlebell%20Tib%20Bar%20Raise",
+                  "notes": [
+                    "Heavy load, strict form, no momentum"
+                  ],
+                  "prescription": "2 × 6–10",
+                  "sets": 2,
+                  "reps": "6–10",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "iso-tib-bar-raise",
+                  "name": "Iso Tib Bar Raise",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Iso%20Tib%20Bar%20Raise",
+                  "notes": [
+                    "Max dorsiflexion, steady breathing"
+                  ],
+                  "prescription": "2 × 20–30 s",
+                  "sets": 2,
+                  "reps": "20–30",
+                  "stage": "mechanical"
+                }
+              ],
+              "focus": "Anterior tibialis, ankle dorsiflexion strength, shin resilience"
+            },
+            {
+              "id": "calves",
+              "name": "Calves",
+              "notes": [],
+              "exercises": [
+                {
+                  "id": "seated-machine-calf-raise",
+                  "name": "Seated Machine Calf Raise",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Seated%20Machine%20Calf%20Raise",
+                  "notes": [
+                    "Slow eccentric, deep stretch, soleus focus"
+                  ],
+                  "prescription": "2 × 12–15",
+                  "sets": 2,
+                  "reps": "12–15",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "heavy-seated-calf-raise",
+                  "name": "Heavy Seated Calf Raise",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Heavy%20Seated%20Calf%20Raise",
+                  "notes": [
+                    "Bent knee, no bounce, long squeeze at top"
+                  ],
+                  "prescription": "2 × 8–10",
+                  "sets": 2,
+                  "reps": "8–10",
+                  "stage": "mechanical"
+                },
+                {
+                  "id": "smith-machine-standing-calf-raise",
+                  "name": "Smith Machine Standing Calf Raise",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Smith%20Machine%20Standing%20Calf%20Raise",
+                  "notes": [
+                    "Straight knee, pause in stretch, controlled concentric"
+                  ],
+                  "prescription": "2 × 8–10",
+                  "sets": 2,
+                  "reps": "8–10",
+                  "stage": "stability"
+                },
+                {
+                  "id": "heavy-single-leg-standing-calf-raise-machine-or-smith",
+                  "name": "Heavy Single-Leg Standing Calf Raise (Machine or Smith)",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Heavy%20Single-Leg%20Standing%20Calf%20Raise%20(Ma",
+                  "notes": [
+                    "Heavy load, full ROM, peak hold at top"
+                  ],
+                  "prescription": "3 × 6–8",
+                  "sets": 3,
+                  "reps": "6–8",
+                  "stage": "stability"
+                },
+                {
+                  "id": "standing-single-leg-calf-raise-mechanical-drop-set",
+                  "name": "Standing Single-Leg Calf Raise Mechanical Drop Set",
+                  "thumbnail": "https://placehold.co/200x200/EEE/31343C?text=Standing%20Single-Leg%20Calf%20Raise%20Mechanica",
+                  "notes": [
+                    "Straight-leg reps → bent-knee AMRAP → 20–30 s top partials"
+                  ],
+                  "prescription": "1 round",
+                  "stage": "metabolic"
+                }
+              ],
+              "focus": "Gastrocnemius + soleus hypertrophy, ankle stiffness, elastic strength"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+} as const;

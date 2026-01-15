@@ -1,0 +1,16 @@
+{
+  "name": "workout-yaml-package",
+  "version": "0.1.0",
+  "description": "Utilities to convert and validate workout YAML configs from printable workout markdown.",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "convert": "node src/convert.js",
+    "validate": "node src/validate.js data/upper-lower.yaml",
+    "lint": "node src/validate.js"
+  },
+  "dependencies": {
+    "yaml": "^2.4.2",
+    "zod": "^3.22.4"
+  }
+}
