@@ -6,29 +6,28 @@ workout_groups:
     name: Upper
     workouts:
       - id: forearms
-        name: Forearms
+        name: Forearms (Forearms bench)
         group: upper
         tags:
           - upper
         subsections:
-          - id: hands-combo
-            name: Hands (Combo)
+          - id: hands
+            name: Hands
             notes: []
             exercises:
-              - id: rubber-finger-lever-holds
-                name: Rubber Finger Lever Holds
+              - id: rubber-finger-band-expansd
+                name: Rubber Finger Band Expands
                 thumbnail: ./media/Finger_Flexbar_Curl.jpg
                 notes:
-                  - 2 × 30 reps (red band)
                   - Fingers fully open, slow control, no wrist movement
-                prescription: "Purpose: Neural activation and extensor balance"
+                prescription: 2 × 30 reps (red band)
                 stage: neural
               - id: thumb-opposition-press-plate-or-band
                 name: Thumb Opposition Press (Plate or Band)
                 thumbnail: ./media/tumbopposition.png
                 notes:
                   - Slow squeeze, thumb drives into fingers, no wrist bend
-                prescription: 2 × 15–20
+                prescription: 2 × 15–20 x 2x red band
                 sets: 2
                 reps: 15–20
                 stage: mechanical
@@ -37,7 +36,7 @@ workout_groups:
                 thumbnail: ./media/plate-pinch-984107551.jpg
                 notes:
                   - Tall posture, shoulder packed, _no re-gripping_
-                prescription: 2 × 30–40 s
+                prescription: 2 × 30–40 s x 15kg pinch
                 sets: 2
                 reps: 30–40
                 stage: mechanical
@@ -46,8 +45,9 @@ workout_groups:
                 thumbnail: ./media/neutral_grip_plate_wrist_curls.jpg
                 notes:
                   - Neutral wrist, crush the handle, stop before form breaks
-                prescription: 1–2 × AMRAP
+                prescription: 1–2 × AMRAP x 6kg
                 sets: 2
+
                 reps: AMRAP
                 stage: metabolic
             focus: Finger extensors, intrinsic hand muscles, thumb strength, crush + pinch grip
@@ -61,35 +61,20 @@ workout_groups:
                 thumbnail: ./media/Seated Dumbell wrist curl.jpg
                 notes:
                   - Controlled full ROM, deep stretch at bottom
-                prescription: 2 × 15–20
+                prescription: 2 × 15–20 x 25kg
                 sets: 2
                 reps: 15–20
                 stage: stability
               - id: barbell-wrist-flexion-low-pulley-or-barbell
-                name: Barbell Wrist Flexion (Low Pulley or Barbell)
+                name: Barbell Wrist Curls
                 thumbnail: ./media/barbell wrist flexion.jpg
                 notes:
                   - Constant tension, wrists only move
-                prescription: 2 × 12–15
+                prescription: 2 × 12–15 x 30kg + 1 drop set
                 sets: 2
                 reps: 12–15
                 stage: mechanical
-              - id: heavy-farmer-s-carries
-                name: Heavy Farmer’s Carries
-                thumbnail: ./media/farmers-carry-kettlebell-487461920-1.jpg
-                notes:
-                  - Heavy load, upright posture, ribs down
-                prescription: 3 × 30–40 m
-                sets: 3
-                reps: 30–40
-                stage: mechanical
-              - id: wrist-curl-drop-set
-                name: Wrist Curl Drop Set
-                thumbnail: ./media/barbell wrist flexion.jpg
-                notes:
-                  - Full ROM → partials → 20 s iso hold
-                prescription: 1 extended set
-                stage: stability
+
             focus: Finger flexors, wrist flexors, carryover to pulling & pressing
           - id: wrist-extension
             name: Wrist Extension
@@ -100,7 +85,7 @@ workout_groups:
                 thumbnail: ./media/dumbbell-reverse-wrist-curls-jan22-1024x576-2003626446.jpg
                 notes:
                   - Slow, controlled, pause briefly at top
-                prescription: 2 × 15–20
+                prescription: 2 × 15–20 x 6kg
                 sets: 2
                 reps: 15–20
                 stage: stability
@@ -109,21 +94,10 @@ workout_groups:
                 thumbnail: ./media/reverser wrist crrl.jpg
                 notes:
                   - Constant tension, no elbow movement
-                prescription: 2 × 12–15
+                prescription: 2 × 12–15 x 25kg, + drop set
                 sets: 2
                 reps: 12–15
                 stage: mechanical
-              - id: controlled-wrist-deviations-radial-ulnar
-                name: Controlled Wrist Deviations (Radial & Ulnar)
-                thumbnail: https://placehold.co/200x200/EEE/31343C?text=Pasted%20image%2020260109070043.png
-                notes:
-                  - https://www.youtube.com/watch?v=AvLZWd4udxg
-                  - Light load, strict control, small ROM
-                prescription: 2 × 12–15 / side
-                sets: 2
-                reps: 12–15
-                video: https://www.youtube.com/watch?v=AvLZWd4udxg
-                stage: stability
               - id: reverse-ez-bar-curls
                 name: Reverse EZ-Bar Curls
                 thumbnail: ./media/reverse ez bar curl.jpg
@@ -140,52 +114,6 @@ workout_groups:
         tags:
           - upper
         subsections:
-          - id: biceps
-            name: Biceps
-            notes: []
-            exercises:
-              - id: preacher-curl-machine-or-ez-bar
-                name: Preacher Curl (Machine or EZ-Bar)
-                thumbnail: ./media/preacher-curl-1000x1000-4233788383.jpg
-                notes:
-                  - Upper arm fixed, stop short of lockout
-                  - _At-home (DB/BB):_ DB preacher curl over incline bench or arm braced on thigh
-                prescription: 2 × 12–15
-                sets: 2
-                reps: 12–15
-                at_home: _ DB preacher curl over incline bench or arm braced on thigh
-                stage: mechanical
-              - id: cross-body-hammer-curl
-                name: Cross-Body Hammer Curl
-                thumbnail: ./media/cross body hammer curl.png
-                notes:
-                  - Neutral grip, elbow tight
-                  - _At-home (DB/BB):_ Cross-body DB hammer curl (same movement)
-                prescription: 1–2 × 20 alternating
-                sets: 2
-                reps: "20"
-                at_home: _ Cross-body DB hammer curl (same movement)
-                stage: mechanical
-              - id: ez-bar-curl-standing
-                name: EZ-Bar Curl (Standing)
-                thumbnail: ./media/ex bar curls.jpg
-                notes:
-                  - Controlled eccentric, no hip drive
-                  - _At-home (DB/BB):_ Straight-bar barbell curl
-                prescription: 3 × 6–8
-                sets: 3
-                reps: 6–8
-                at_home: _ Straight-bar barbell curl
-                stage: stability
-              - id: cable-curl-mechanical-drop-set
-                name: Cable Curl Mechanical Drop Set
-                thumbnail: ./media/cable curl.jpg
-                notes:
-                  - Standing → step-forward → top-range pulses
-                  - _At-home (DB/BB):_ DB curl → incline DB curl → top-range pulses
-                prescription: 1–2 rounds
-                at_home: _ DB curl → incline DB curl → top-range pulses
-                stage: mechanical
           - id: rotator-cuff
             name: Rotator Cuff
             notes: []
@@ -223,8 +151,8 @@ workout_groups:
                 reps: 8–10
                 at_home: _ Seated DB 90° external rotation (very light)
                 stage: mechanical
-              - id: overhead-iso-hold-plate-or-dbs
-                name: Overhead Iso Hold (Plate or DBs)
+              - id: handstand-hold
+                name: Handstand Iso Hold 
                 thumbnail: ./media/BrazilianPlatHold.jpg
                 notes:
                   - Ribs down, steady breathing
@@ -234,6 +162,46 @@ workout_groups:
                 reps: 30–40
                 at_home: _ Single-arm DB overhead hold
                 stage: stability
+          - id: biceps
+            name: Biceps
+            notes: []
+            exercises:
+              - id: decline-bench-hammer-curl
+                name: Decline Bench Hammer Curl
+                thumbnail: ./media/cross body hammer curl.png
+                notes:
+                  - Neutral grip, elbow tight
+                  - _At-home (DB/BB):_ Cross-body DB hammer curl (same movement)
+                prescription: 1–2 × 20 alternating x 18kg
+                sets: 2
+                reps: "20"
+                at_home: _ Cross-body DB hammer curl (same movement)
+                stage: mechanical
+
+              - id: ez-bar-curl-standing
+                name: EZ-Bar Curl (Standing) 
+                thumbnail: ./media/ex bar curls.jpg
+                notes:
+                  - Controlled eccentric, no hip drive
+                  - _At-home (DB/BB):_ Straight-bar barbell curl
+                prescription: 3 × 6–8 x 35kg
+                sets: 3
+                reps: 6–8
+                at_home: _ Straight-bar barbell curl
+                stage: stability
+
+                name: Preacher Curl Machine drop sets
+                thumbnail: ./media/preacher-curl-1000x1000-4233788383.jpg
+                notes:
+                  - Upper arm fixed, stop short of lockout
+                  - _At-home (DB/BB):_ DB preacher curl over incline bench or arm braced on thigh
+                prescription: 2 × 12–15 x 40kg
+                sets: 2
+                reps: 12–15
+                at_home: _ DB preacher curl over incline bench or arm braced on thigh
+                stage: mechanical
+
+          
           - id: shoulders
             name: Shoulders
             notes: []
@@ -284,50 +252,42 @@ workout_groups:
             name: Triceps
             notes: []
             exercises:
-              - id: single-arm-cable-overhead-extension
-                name: Single-Arm Cable Overhead Extension
+              - id: tricep-dumbell-kick-backs
+                name: Tricep Dumbell Kick Backs
                 thumbnail: ./media/tricep_extentsion.jpg
                 notes:
                   - Light, full stretch, ribs down
                   - _At-home (DB/BB):_ Single-DB overhead triceps extension
-                prescription: 2 × 12–15 / arm
+                prescription: 2 × 12–15 / arm x8kg
                 sets: 2
                 reps: 12–15
                 at_home: _ Single-DB overhead triceps extension
                 stage: mechanical
-              - id: cable-pressdown-neutral-grip
-                name: Cable Pressdown (Neutral Grip)
-                thumbnail: ./media/trice-pushdown-benefits-4292198477.png
-                notes:
-                  - Elbows pinned, squeeze lockout
-                  - _At-home (DB/BB):_ Close-grip DB floor press
-                prescription: 2 × 15
-                sets: 2
-                reps: "15"
-                at_home: _ Close-grip DB floor press
-                stage: mechanical
+
               - id: close-grip-bench-press
                 name: Close-Grip Bench Press
                 thumbnail: ./media/close-grip-bench-press-howto-2-800-4027774772.jpg
                 notes:
                   - Grip just inside shoulders, drive to lockout
                   - _At-home (DB/BB):_ Barbell close-grip bench or DB close-grip press
-                prescription: 3 × 4–6
+                prescription: 3 × 6-8 x 70kg
                 sets: 3
-                reps: 4–6
+                reps: 6-8
                 at_home: _ Barbell close-grip bench or DB close-grip press
                 stage: mechanical
-              - id: cable-rope-pressdown-extended-set
-                name: Cable Rope Pressdown (Extended Set)
-                thumbnail: https://placehold.co/200x200/EEE/31343C?text=Exercise%2F200_Bodybuilding%2Fv1%2Fmedia%2Fcable
+             
+              - id: cable-pressdown-neutral-grip
+                name: Cable Pressdown (Neutral Grip)
+                thumbnail: ./media/trice-pushdown-benefits-4292198477.png
                 notes:
-                  - Short rest, hard lockouts
-                  - _At-home (DB/BB):_ DB kickbacks → partials
-                prescription: 2 × 12–15 + partials
+                  - Elbows pinned, squeeze lockout
+                  - _At-home (DB/BB):_ Close-grip DB floor press
+                prescription: 2 × 15 x first red weight
                 sets: 2
-                reps: 12–15
-                at_home: _ DB kickbacks → partials
-                stage: metabolic
+                reps: "15"
+                at_home: _ Close-grip DB floor press
+                stage: mechanical
+
       - id: torso
         name: Torso
         group: upper
@@ -338,23 +298,13 @@ workout_groups:
             name: Chest (Upper Bias, Controlled Pressing)
             notes: []
             exercises:
-              - id: low-incline-cable-fly-30
-                name: Low-Incline Cable Fly (≈30°)
-                thumbnail: ./media/cable-low-fly-1130179404.jpg
-                notes:
-                  - Slow squeeze, ribs down
-                  - "Why: Clean pec activation with rib control"
-                prescription: 2 × 12–15
-                sets: 2
-                reps: 12–15
-                stage: neural
               - id: machine-chest-press-light-controlled
                 name: Machine Chest Press (Light, Controlled)
                 thumbnail: ./media/machine bench.jpg
                 notes:
                   - Chest-driven reps
                   - "Why: Grooves pressing pattern without joint fatigue"
-                prescription: 2 × 12–15
+                prescription: 2 × 12–15 x 80kg
                 sets: 2
                 reps: 12–15
                 stage: mechanical
@@ -364,7 +314,7 @@ workout_groups:
                 notes:
                   - Upper-chest focus, stable arch
                   - "Why: Primary mechanical tension driver"
-                prescription: 3 × 5–8
+                prescription: 3 × 5–8 x 80kg
                 sets: 3
                 reps: 5–8
                 stage: mechanical
@@ -373,14 +323,14 @@ workout_groups:
                 thumbnail: ./media/cable files.jpg
                 notes:
                   - "Why: Continuous-tension hypertrophy finisher with minimal shoulder stress"
-                prescription: 1 round × 10–12 each
+                prescription: 3 round × 10–12 each x l4
                 stage: metabolic
           - id: upper-back-scapulae-mid-traps-serratus
             name: Upper Back (Scapulae, Mid Traps, Serratus)
             notes: []
             exercises:
               - id: cable-serratus-punch
-                name: Cable Serratus Punch
+                name: Band Serratus Punch
                 thumbnail: ./media/cable serratus punch.jpg
                 notes:
                   - Ribs down, reach long
@@ -389,6 +339,15 @@ workout_groups:
                 sets: 2
                 reps: 12–15
                 stage: neural
+              - id: heavy-farmer-s-carries
+                name: Heavy Farmer’s Carries
+                thumbnail: ./media/farmers-carry-kettlebell-487461920-1.jpg
+                notes:
+                  - Heavy load, upright posture, ribs down
+                prescription: 3 × 30–40 m
+                sets: 3
+                reps: 30–40
+                stage: mechanical
               - id: prone-incline-y-raise
                 name: Prone Incline Y-Raise
                 thumbnail: ./media/prone-y-raise-1024x538-4151053179.jpg
