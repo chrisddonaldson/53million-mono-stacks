@@ -125,9 +125,10 @@
 
 ### Quads
 
-- [ ] Wall Sits 30secs | Notes:
-- [ ] Hack Squat — 3×6–8 80kg | Notes:
-- [ ] Seated Leg Extension + drop — 2×12–15 | Notes:
+- [ ] Wall Sit — 2×30–45s | Notes:
+- [ ] Dumbbell Walking Lunge (Long Step, Upright Torso) — 3×8–12/side | Notes:
+- [ ] Heel-Elevated Goblet Squat — 3×10–15 | Notes:
+- [ ] Seated Leg Extension (or DB Sissy Squat) + drop — 2×12–15 | Notes:
 
 ### Adductors
 
